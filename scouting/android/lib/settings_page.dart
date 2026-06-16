@@ -9,6 +9,7 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:scout_ops_android/main.dart';
 import 'services/DataBase.dart';
+import 'services/ArchiveService.dart';
 import 'services/LockdownService.dart';
 import 'components/MatchSelection.dart';
 import 'components/ScoutersList.dart';
@@ -179,6 +180,141 @@ class SettingsPageState extends State<SettingsPage> {
     setState(() {
       isLoading = false;
     });
+  }
+
+  // ── Archive Dialogs ──────────────────────────────────────────────
+
+  void _showArchiveDialog(BuildContext context) {
+    final controller = TextEditingController(
+      text: DateTime.now().year.toString(),
+    );
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text('Archive Current Season',
+            style: GoogleFonts.museoModerno(fontSize: 20)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              'This will snapshot all match, pit, qualitative, and dashboard '
+              'data into a read-only archive. You can then safely sync the '
+              'fork for the new game.',
+              style: GoogleFonts.museoModerno(fontSize: 14),
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: controller,
+              decoration: InputDecoration(
+                labelText: 'Season Label (e.g. 2026)',
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              style: GoogleFonts.museoModerno(fontSize: 16),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('CANCEL'),
+          ),
+          TextButton(
+            onPressed: () async {
+              Navigator.pop(ctx);
+              final label = controller.text.trim();
+              if (label.isEmpty) return;
+
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('Archiving season "$label"...'),
+                  duration: const Duration(seconds: 2),
+                ),
+              );
+
+              final success = await ArchiveService.archiveCurrentSeason(
+                seasonKey: label,
+                clearAfterArchive: false,
+              );
+
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      success
+                          ? '✅ Season "$label" archived successfully!'
+                          : '❌ Failed to archive. Check logs.',
+                    ),
+                    backgroundColor: success ? Colors.green : Colors.red,
+                    duration: const Duration(seconds: 3),
+                  ),
+                );
+              }
+            },
+            child: Text('ARCHIVE',
+                style: TextStyle(color: Colors.orange[700])),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showArchivedSeasonsDialog(BuildContext context) async {
+    final seasons = await ArchiveService.getArchivedSeasons();
+
+    if (!mounted) return;
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text('Archived Seasons',
+            style: GoogleFonts.museoModerno(fontSize: 20)),
+        content: SizedBox(
+          width: double.maxFinite,
+          child: seasons.isEmpty
+              ? Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 20),
+                  child: Text(
+                    'No archived seasons yet.\nArchive a season before '
+                    'syncing the fork for a new game.',
+                    textAlign: TextAlign.center,
+                    style: GoogleFonts.museoModerno(
+                      fontSize: 14,
+                      color: Colors.grey,
+                    ),
+                  ),
+                )
+              : ListView.builder(
+                  shrinkWrap: true,
+                  itemCount: seasons.length,
+                  itemBuilder: (context, index) {
+                    final s = seasons[index];
+                    return ListTile(
+                      leading: const Icon(Icons.archive, color: Colors.orange),
+                      title: Text(
+                        s.seasonKey,
+                        style: GoogleFonts.museoModerno(fontSize: 16),
+                      ),
+                      subtitle: Text(
+                        'Event: ${s.eventKey.isNotEmpty ? s.eventKey : "N/A"}\n'
+                        'Archived: ${s.archivedAt}',
+                        style: GoogleFonts.museoModerno(fontSize: 12),
+                      ),
+                      isThreeLine: true,
+                    );
+                  },
+                ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('CLOSE'),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -753,6 +889,75 @@ class SettingsPageState extends State<SettingsPage> {
                 ],
               ),
             ), // Load Match, Eject Match, Clear Data
+            const SizedBox(height: 10),
+
+            // ── Season Archive ────────────────────────────────────────
+            Container(
+              padding: const EdgeInsets.all(10),
+              margin: const EdgeInsets.only(left: 10, right: 10),
+              width: double.infinity,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.only(left: 8, bottom: 6),
+                    child: Text(
+                      'Season Archive',
+                      style: GoogleFonts.museoModerno(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.grey,
+                      ),
+                    ),
+                  ),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: ChoiceChip(
+                          label: Center(
+                            child: Text(
+                              'Archive Current Season',
+                              style: GoogleFonts.museoModerno(
+                                  fontSize: 22, color: Colors.white),
+                            ),
+                          ),
+                          selectedColor: const Color.fromARGB(255, 168, 85, 20),
+                          selected: true,
+                          showCheckmark: false,
+                          side: const BorderSide(color: Colors.orange),
+                          onSelected: (bool selected) {
+                            _showArchiveDialog(context);
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: ChoiceChip(
+                          label: Center(
+                            child: Text(
+                              'View Archived Seasons',
+                              style: GoogleFonts.museoModerno(
+                                  fontSize: 22, color: Colors.white),
+                            ),
+                          ),
+                          selectedColor: const Color.fromARGB(255, 80, 80, 120),
+                          selected: true,
+                          showCheckmark: false,
+                          side: const BorderSide(color: Colors.grey),
+                          onSelected: (bool selected) {
+                            _showArchivedSeasonsDialog(context);
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ), // Season Archive
             SizedBox(
               height: 30,
             ),

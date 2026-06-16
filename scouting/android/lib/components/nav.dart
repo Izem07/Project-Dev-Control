@@ -11,6 +11,8 @@ import '../Pit_Recorder/Pit_Recorder.dart';
 import '../Pit_Checklist/Pit_Checklist.dart';
 import '../settings_page.dart';
 import '../home_page.dart';
+import '../Scan/scout_ops_scanner.dart';
+import '../Dash/dashboard_wrapper.dart';
 
 class NavBar extends StatelessWidget {
   const NavBar({super.key});
@@ -86,6 +88,18 @@ class NavBar extends StatelessWidget {
                     subtitle: 'Match history',
                     color: Colors.indigo,
                     page: const LogsPage()),
+                _buildNavTile(context, dark,
+                    icon: Icons.qr_code_scanner_rounded,
+                    title: 'QR Scanner',
+                    subtitle: 'Scan match data',
+                    color: Colors.redAccent,
+                    page: const ScoutOpsScanner()),
+                _buildNavTile(context, dark,
+                    icon: Icons.dashboard_customize_rounded,
+                    title: 'Dashboard',
+                    subtitle: 'View analytics',
+                    color: Colors.blueAccent,
+                    page: const DashboardWrapper()),
               ],
             ),
           ),

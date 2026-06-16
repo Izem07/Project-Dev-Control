@@ -14,6 +14,7 @@ import 'components/Animator/GridPainter.dart';
 import 'components/Button.dart';
 import 'components/nav.dart';
 import 'main.dart';
+import 'Scan/scout_ops_scanner.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -407,6 +408,15 @@ Widget _buildCustomAppBar(BuildContext context) {
     backgroundColor: Colors.transparent, // Transparent to show the animation
     elevation: 0, // Remove shadow for a cleaner look
     actions: [
+      IconButton(
+        icon: const Icon(Icons.qr_code_scanner_rounded,
+            size: 30, color: Colors.white),
+        onPressed: () {
+          Route route = MaterialPageRoute(
+              builder: (context) => const ScoutOpsScanner());
+          Navigator.push(context, route);
+        },
+      ),
       IconButton(
         icon: const Icon(Icons.attach_file_rounded,
             size: 30, color: Colors.white),

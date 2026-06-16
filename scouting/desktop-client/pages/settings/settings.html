@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ScoutOps Settings</title>
+    <!-- Modern Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../index/control.css">
+    <style>
+        .settings-container {
+            max-width: 900px;
+            margin: 30px auto;
+            padding: 0 20px;
+        }
+        .settings-card {
+            background: var(--card-bg);
+            backdrop-filter: blur(8px);
+            border: 1px solid var(--card-border);
+            border-radius: 16px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+        .settings-card h2 {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 20px;
+            border-bottom: 1px solid var(--card-border);
+            padding-bottom: 10px;
+            background: var(--primary-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .app-settings-row {
+            display: grid;
+            grid-template-columns: 1.2fr 0.8fr 2fr 2fr;
+            gap: 15px;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+        }
+        .row-header {
+            display: grid;
+            grid-template-columns: 1.2fr 0.8fr 2fr 2fr;
+            gap: 15px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            font-size: 13px;
+            margin-bottom: 10px;
+            padding-bottom: 5px;
+            border-bottom: 1px solid var(--card-border);
+        }
+        .app-name-label {
+            font-weight: 600;
+            color: var(--text-primary);
+            font-size: 14px;
+        }
+        input[type="text"], input[type="number"] {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--card-border);
+            color: var(--text-primary);
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-family: var(--font-outfit);
+            font-size: 13px;
+            width: 100%;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        input[type="text"]:focus, input[type="number"]:focus {
+            border-color: var(--primary-color);
+        }
+        .form-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        .description-note {
+            color: var(--text-secondary);
+            font-size: 13px;
+            margin-bottom: 20px;
+            line-height: 1.6;
+        }
+    </style>
+</head>
+<body>
+    <!-- Unified Dynamic Navigation -->
+    <script src="../../renderer.js"></script>
+
+    <main class="settings-container">
+        <header class="hub-header">
+            <div class="header-info">
+                <h1>Workspace Configuration</h1>
+                <p>Customize ports, commands, and target folders for each ScoutOps sub-application</p>
+            </div>
+        </header>
+
+        <section class="settings-card">
+            <h2>Sub-App Settings</h2>
+            <p class="description-note">
+                These settings tell the Control Hub how to run your scouting apps locally. Commands are executed relative to the specified working directory (Cwd). Cwd paths should be relative to the <code>scouting/desktop-client</code> directory.
+            </p>
+
+            <form id="settings-form" onsubmit="saveSettings(event)">
+                <div class="row-header">
+                    <div>Application</div>
+                    <div>Port</div>
+                    <div>Launch Command</div>
+                    <div>Working Directory (Cwd)</div>
+                </div>
+
+                <div id="apps-config-list">
+                    <!-- Dynamic form rows go here -->
+                </div>
+
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" onclick="resetToDefaults()">Reset to Defaults</button>
+                    <button type="submit" class="btn btn-primary">Save Configs</button>
+                </div>
+            </form>
+        </section>
+    </main>
+
+    <script>
+        let currentConfigs = {};
+
+        async function loadSettings() {
+            currentConfigs = await window.electron.getAppConfigs();
+            renderFormRows(currentConfigs);
+        }
+
+        function renderFormRows(configs) {
+            const listContainer = document.getElementById('apps-config-list');
+            listContainer.innerHTML = '';
+
+            for (const appId in configs) {
+                const app = configs[appId];
+                
+                const row = document.createElement('div');
+                row.className = 'app-settings-row';
+                row.id = `row-${appId}`;
+
+                // App Name Label
+                const nameLabel = document.createElement('div');
+                nameLabel.className = 'app-name-label';
+                nameLabel.textContent = app.name;
+                row.appendChild(nameLabel);
+
+                // Port Input
+                const portInput = document.createElement('input');
+                portInput.type = 'number';
+                portInput.id = `${appId}-port`;
+                portInput.value = app.port;
+                portInput.required = true;
+                if (appId === 'android') {
+                    portInput.disabled = true;
+                    portInput.value = 0;
+                    portInput.style.opacity = '0.5';
+                }
+                const portCol = document.createElement('div');
+                portCol.appendChild(portInput);
+                row.appendChild(portCol);
+
+                // Launch Command Input
+                const cmdInput = document.createElement('input');
+                cmdInput.type = 'text';
+                cmdInput.id = `${appId}-cmd`;
+                cmdInput.value = app.command;
+                cmdInput.required = true;
+                const cmdCol = document.createElement('div');
+                cmdCol.appendChild(cmdInput);
+                row.appendChild(cmdCol);
+
+                // CWD Input
+                const cwdInput = document.createElement('input');
+                cwdInput.type = 'text';
+                cwdInput.id = `${appId}-cwd`;
+                cwdInput.value = app.cwd;
+                cwdInput.required = true;
+                const cwdCol = document.createElement('div');
+                cwdCol.appendChild(cwdInput);
+                row.appendChild(cwdCol);
+
+                listContainer.appendChild(row);
+            }
+        }
+
+        async function saveSettings(event) {
+            event.preventDefault();
+            
+            const updatedConfigs = {};
+            for (const appId in currentConfigs) {
+                updatedConfigs[appId] = {
+                    name: currentConfigs[appId].name,
+                    port: parseInt(document.getElementById(`${appId}-port`).value, 10),
+                    command: document.getElementById(`${appId}-cmd`).value,
+                    cwd: document.getElementById(`${appId}-cwd`).value
+                };
+            }
+
+            const result = await window.electron.saveAppConfigs(updatedConfigs);
+            if (result.success) {
+                alert('Workspace configuration saved successfully!');
+                loadSettings();
+            } else {
+                alert('Failed to save configuration.');
+            }
+        }
+
+        function resetToDefaults() {
+            if (confirm('Are you sure you want to reset all configurations to their default values?')) {
+                const defaultConfigs = {
+                    server: { name: 'Scout Ops Server', port: 5000, command: 'python server.py', cwd: '../server' },
+                    lookup: { name: 'Scout Lookup (Next.js)', port: 3000, command: 'npm run dev', cwd: '../scout-lookup' },
+                    dash: { name: 'Scout Analytics (Dash)', port: 8080, command: 'flutter run -d web-server --web-port=8080', cwd: '../dash' },
+                    viewer: { name: 'Match Viewer', port: 8081, command: 'flutter run -d web-server --web-port=8081', cwd: '../match-viewer' },
+                    scan: { name: 'Scout Ops Scan', port: 8082, command: 'flutter run -d web-server --web-port=8082', cwd: '../scan' },
+                    android: { name: 'Scout Ops Android', port: 0, command: 'flutter build apk --no-tree-shake-icons', cwd: '../android' }
+                };
+                renderFormRows(defaultConfigs);
+            }
+        }
+
+        window.onload = loadSettings;
+    </script>
+</body>
+</html>
