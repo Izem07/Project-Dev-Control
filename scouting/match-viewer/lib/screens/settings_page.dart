@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import '../data/data_store.dart';
 import '../data/models.dart';
 import '../tba/tba_client.dart';
-import '../tba/tba_config.dart';
 import '../util/format.dart';
 import '../util/result.dart';
 import '../util/test_flags.dart';

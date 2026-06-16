@@ -1,0 +1,34 @@
+# Flutter/Dart/Pub
+**/doc/api/
+**/ios/Flutter/.last_build_id
+.dart_tool/
+.flutter-plugins-dependencies
+.pub-cache/
+.pub/
+/build/
+/coverage/
+
+# IntelliJ
+*.iml
+*.ipr
+*.iws
+.idea/
+
+# Symbolication / obfuscation maps
+app.*.symbols
+app.*.map.json
+
+# Android Studio build artifacts
+/android/app/debug
+/android/app/profile
+/android/app/release
+
+# Electron leftovers (old desktop-client)
+node_modules/
+winx64/
+dist/
+
+# OS
+.DS_Store
+*.swp
+*.log

@@ -2,7 +2,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:dio/dio.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:match_record/tba/tba_client.dart';
-import 'package:match_record/util/result.dart';
 
 class MockDio extends Mock implements Dio {}
 

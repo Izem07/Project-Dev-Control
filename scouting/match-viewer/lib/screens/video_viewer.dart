@@ -1204,7 +1204,9 @@ class _EditMetadataSheetState extends State<_EditMetadataSheet> {
   bool _hasConflictingRecording() {
     if (_selectedMatchKey == null) return false;
     if (_selectedMatchKey == _editingRecording?.matchKey &&
-        _allianceSide == _editingRecording?.allianceSide) return false;
+        _allianceSide == _editingRecording?.allianceSide) {
+      return false;
+    }
     return widget.dataStore.hasRecordingForSide(
       _selectedMatchKey!,
       _allianceSide,

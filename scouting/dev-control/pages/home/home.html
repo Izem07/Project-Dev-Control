@@ -2,46 +2,113 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ScoutOps Admin Menu — Server Sync</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../index/control.css">
     <link rel="stylesheet" href="home.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css">
 </head>
-
 <body>
-<nav class="navbar">
-    <div class="navbar-container">
-        <a href="#" class="navbar-logo">
-            <img src="../../assets/logo.bmp" alt="scouting_app Icon">
-            <span>SCOUTOPS ADMIN MENU</span>
-        </a>
-        <div class="navbar-links">
-            <a href="../home/home.html" class="nav-link">Home</a>
-            <a href="../serversHeath/serverZHeath.html" class="nav-link">Servers Heath</a>
-            <a href="../../pages/settings/settings.html" class="nav-link">Settings</a>
-        </div>
-    </div>
-</nav>
+    <script src="../../renderer.js"></script>
 
-<div class="body">
-
-<form class="container w-full h-full" onsubmit="connect(event)">
-    <div class="input-container">
-        <div class="input-content">
-            <div class="input-dist">
-                <div class="input-type">
-                    <label>
-                        <input class="input-is" id="serveraddress" required placeholder="Server's IP Address" />
-                    </label>
-                    <label>
-                        <input class="input-is" id="port" type="number" required placeholder="Port" />
-                    </label>
-                    <button class="submit" type="submit">Connect</button>
-                </div>
+    <main class="control-container">
+        <header class="hub-header">
+            <div class="header-info">
+                <h1>Server Sync</h1>
+                <p>Connect this Dev Control station to a running Scout Ops Server on the local network</p>
             </div>
+        </header>
+
+        <div class="sync-layout">
+
+            <!-- Connect Card -->
+            <section class="sync-card">
+                <div class="sync-card-header">
+                    <div class="sync-card-icon">📡</div>
+                    <div>
+                        <h2>Connect to Server</h2>
+                        <p class="sync-card-sub">Enter the IP and port of your Scout Ops Python server</p>
+                    </div>
+                </div>
+
+                <form id="connect-form" onsubmit="connect(event)">
+                    <div class="field-group">
+                        <label class="field-label" for="serveraddress">Server IP Address</label>
+                        <input
+                            class="field-input"
+                            id="serveraddress"
+                            type="text"
+                            required
+                            placeholder="e.g. 192.168.1.100"
+                            autocomplete="off"
+                        />
+                    </div>
+                    <div class="field-group">
+                        <label class="field-label" for="port">Port</label>
+                        <input
+                            class="field-input field-input--short"
+                            id="port"
+                            type="number"
+                            required
+                            placeholder="5000"
+                            min="1"
+                            max="65535"
+                        />
+                    </div>
+
+                    <div class="connect-actions">
+                        <button type="submit" class="btn btn-primary connect-btn">
+                            <span class="connect-btn-icon">⚡</span>
+                            Connect
+                        </button>
+                        <button type="button" class="btn btn-secondary" onclick="loadSaved()">
+                            Load Saved
+                        </button>
+                    </div>
+                </form>
+
+                <div id="connect-status" class="connect-status" style="display:none;"></div>
+            </section>
+
+            <!-- Quick Info Card -->
+            <section class="sync-card info-card">
+                <div class="sync-card-header">
+                    <div class="sync-card-icon">ℹ️</div>
+                    <div>
+                        <h2>How to Connect</h2>
+                        <p class="sync-card-sub">Quick guide for field setup</p>
+                    </div>
+                </div>
+                <ol class="info-steps">
+                    <li>
+                        <span class="step-num">1</span>
+                        <span>Start the <strong>Scout Ops Server</strong> from the Control Panel</span>
+                    </li>
+                    <li>
+                        <span class="step-num">2</span>
+                        <span>Find the server machine's IP on your local network (e.g. <code>192.168.x.x</code>)</span>
+                    </li>
+                    <li>
+                        <span class="step-num">3</span>
+                        <span>Enter the IP and port <code>5000</code> above and click Connect</span>
+                    </li>
+                    <li>
+                        <span class="step-num">4</span>
+                        <span>You'll be redirected to <strong>Server Health</strong> on success</span>
+                    </li>
+                </ol>
+
+                <div class="info-tip">
+                    <span class="tip-icon">💡</span>
+                    <span>Using Bluetooth PAN? The server IP is typically <code>192.168.44.1</code> on the host device.</span>
+                </div>
+            </section>
+
         </div>
-    </div>
-</form>
-</div>
-<script src="home.js"></script>
+    </main>
+
+    <script src="home.js"></script>
 </body>
 </html>

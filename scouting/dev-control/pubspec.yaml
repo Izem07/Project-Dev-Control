@@ -1,0 +1,31 @@
+name: scoutops_admin_menu
+description: ScoutOps Admin Menu — Dev Control for FRC Team 201 The FEDS
+publish_to: none
+version: 5.6.0+1
+
+environment:
+  sdk: '>=3.4.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  provider: ^6.1.2
+  shared_preferences: ^2.3.2
+  http: ^1.2.2
+  url_launcher: ^6.3.1
+  process_run: ^1.2.1
+  google_fonts: ^6.2.1
+  file_picker: ^8.1.2
+  path: ^1.9.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/logo.png
+    - assets/logo.ico
+    - assets/banner.png

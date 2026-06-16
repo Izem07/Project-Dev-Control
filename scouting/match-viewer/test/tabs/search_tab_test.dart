@@ -4,7 +4,7 @@ import 'package:match_record/tabs/search_tab.dart';
 import 'package:match_record/widgets/app_search_bar.dart';
 
 void main() {
-  Match _makeMatch({
+  Match makeMatch({
     required String key,
     required List<String> redTeamKeys,
     required List<String> blueTeamKeys,
@@ -20,27 +20,27 @@ void main() {
     );
   }
 
-  MatchWithVideos _mwv(Match m) {
+  MatchWithVideos mwv(Match m) {
     return MatchWithVideos(match: m);
   }
 
   group('SearchTab.matchesUnion', () {
-    final m1 = _makeMatch(
+    final m1 = makeMatch(
       key: '2026mimid_qm1',
       redTeamKeys: ['frc201', 'frc100', 'frc101'],
       blueTeamKeys: ['frc254', 'frc200', 'frc202'],
     );
-    final m2 = _makeMatch(
+    final m2 = makeMatch(
       key: '2026mimid_qm2',
       redTeamKeys: ['frc254', 'frc300', 'frc301'],
       blueTeamKeys: ['frc400', 'frc401', 'frc402'],
     );
-    final m3 = _makeMatch(
+    final m3 = makeMatch(
       key: '2026mimid_qm3',
       redTeamKeys: ['frc500', 'frc501', 'frc502'],
       blueTeamKeys: ['frc600', 'frc601', 'frc602'],
     );
-    final m4 = _makeMatch(
+    final m4 = makeMatch(
       key: '2026mimid_qm4',
       redTeamKeys: ['frc201', 'frc100', 'frc101'],
       blueTeamKeys: ['frc254', 'frc200', 'frc202'],
@@ -48,7 +48,7 @@ void main() {
 
     test('returns matches containing ANY of the searched teams', () {
       final teamNumbers = {201, 254};
-      final matches = [_mwv(m1), _mwv(m2), _mwv(m3)];
+      final matches = [mwv(m1), mwv(m2), mwv(m3)];
       final filtered = matches
           .where((mwv) => SearchTab.matchesUnion(mwv, teamNumbers))
           .toList();
@@ -59,7 +59,7 @@ void main() {
 
     test('returns empty when no teams match', () {
       final teamNumbers = {999};
-      final matches = [_mwv(m1), _mwv(m2), _mwv(m3)];
+      final matches = [mwv(m1), mwv(m2), mwv(m3)];
       final filtered = matches
           .where((mwv) => SearchTab.matchesUnion(mwv, teamNumbers))
           .toList();
@@ -68,7 +68,7 @@ void main() {
 
     test('single team finds all its matches', () {
       final teamNumbers = {201};
-      final matches = [_mwv(m1), _mwv(m2), _mwv(m3), _mwv(m4)];
+      final matches = [mwv(m1), mwv(m2), mwv(m3), mwv(m4)];
       final filtered = matches
           .where((mwv) => SearchTab.matchesUnion(mwv, teamNumbers))
           .toList();
@@ -77,32 +77,32 @@ void main() {
 
     test('finds team on blue alliance', () {
       final teamNumbers = {254};
-      expect(SearchTab.matchesUnion(_mwv(m1), teamNumbers), true);
+      expect(SearchTab.matchesUnion(mwv(m1), teamNumbers), true);
     });
 
     test('finds team on red alliance', () {
       final teamNumbers = {201};
-      expect(SearchTab.matchesUnion(_mwv(m1), teamNumbers), true);
+      expect(SearchTab.matchesUnion(mwv(m1), teamNumbers), true);
     });
 
     test('empty team numbers matches nothing', () {
       final teamNumbers = <int>{};
-      expect(SearchTab.matchesUnion(_mwv(m1), teamNumbers), false);
+      expect(SearchTab.matchesUnion(mwv(m1), teamNumbers), false);
     });
   });
 
   group('SearchTab.matchesIntersect', () {
-    final m1 = _makeMatch(
+    final m1 = makeMatch(
       key: '2026mimid_qm1',
       redTeamKeys: ['frc201', 'frc100', 'frc101'],
       blueTeamKeys: ['frc254', 'frc200', 'frc202'],
     );
-    final m2 = _makeMatch(
+    final m2 = makeMatch(
       key: '2026mimid_qm2',
       redTeamKeys: ['frc254', 'frc300', 'frc301'],
       blueTeamKeys: ['frc400', 'frc401', 'frc402'],
     );
-    final m3 = _makeMatch(
+    final m3 = makeMatch(
       key: '2026mimid_qm3',
       redTeamKeys: ['frc201', 'frc501', 'frc502'],
       blueTeamKeys: ['frc600', 'frc601', 'frc602'],
@@ -110,7 +110,7 @@ void main() {
 
     test('returns only matches containing ALL searched teams', () {
       final teamNumbers = {201, 254};
-      final matches = [_mwv(m1), _mwv(m2), _mwv(m3)];
+      final matches = [mwv(m1), mwv(m2), mwv(m3)];
       final filtered = matches
           .where((mwv) => SearchTab.matchesIntersect(mwv, teamNumbers))
           .toList();
@@ -120,7 +120,7 @@ void main() {
 
     test('returns all matches when searching single team', () {
       final teamNumbers = {201};
-      final matches = [_mwv(m1), _mwv(m3)];
+      final matches = [mwv(m1), mwv(m3)];
       final filtered = matches
           .where((mwv) => SearchTab.matchesIntersect(mwv, teamNumbers))
           .toList();
@@ -129,7 +129,7 @@ void main() {
 
     test('returns empty when no match has all teams', () {
       final teamNumbers = {201, 254, 500};
-      final matches = [_mwv(m1), _mwv(m2), _mwv(m3)];
+      final matches = [mwv(m1), mwv(m2), mwv(m3)];
       final filtered = matches
           .where((mwv) => SearchTab.matchesIntersect(mwv, teamNumbers))
           .toList();
@@ -137,28 +137,28 @@ void main() {
     });
 
     test('works with teams on same alliance side', () {
-      final mSameRed = _makeMatch(
+      final mSameRed = makeMatch(
         key: '2026mimid_qm10',
         redTeamKeys: ['frc201', 'frc254', 'frc100'],
         blueTeamKeys: ['frc400', 'frc401', 'frc402'],
       );
       final teamNumbers = {201, 254};
-      expect(SearchTab.matchesIntersect(_mwv(mSameRed), teamNumbers), true);
+      expect(SearchTab.matchesIntersect(mwv(mSameRed), teamNumbers), true);
     });
 
     test('works with teams on opposite alliance sides', () {
-      final mOpposite = _makeMatch(
+      final mOpposite = makeMatch(
         key: '2026mimid_qm11',
         redTeamKeys: ['frc201', 'frc100', 'frc101'],
         blueTeamKeys: ['frc254', 'frc200', 'frc202'],
       );
       final teamNumbers = {201, 254};
-      expect(SearchTab.matchesIntersect(_mwv(mOpposite), teamNumbers), true);
+      expect(SearchTab.matchesIntersect(mwv(mOpposite), teamNumbers), true);
     });
 
     test('empty team numbers matches all matches (vacuous truth)', () {
       final teamNumbers = <int>{};
-      expect(SearchTab.matchesIntersect(_mwv(m1), teamNumbers), true);
+      expect(SearchTab.matchesIntersect(mwv(m1), teamNumbers), true);
     });
   });
 

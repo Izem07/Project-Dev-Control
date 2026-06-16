@@ -501,7 +501,7 @@ class _TopBar extends StatelessWidget {
                         child: CircularProgressIndicator(
                             strokeWidth: 2, color: AppTheme.accent),
                       )
-                    : Icon(Icons.refresh_rounded,
+                    : const Icon(Icons.refresh_rounded,
                         size: 16, color: AppTheme.accent),
                 label: Text(
                   svc.loading ? 'Refreshing...' : 'Refresh Data',

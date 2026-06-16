@@ -1,435 +1,224 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ScoutOps Admin Menu — Server Health</title>
-    <link rel="stylesheet" href="serverZHeath.css" />
-    <link
-      rel="stylesheet"
-      href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css"
-    />
-    <style>
-      .device-circle {
-        width: 100px;
-        height: 100px;
-        border-radius: 50%;
-        background-color: #4caf50;
-        color: white;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        cursor: pointer;
-        margin: 10px;
-      }
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../index/control.css">
+    <link rel="stylesheet" href="serverZHeath.css">
+</head>
+<body>
+    <div id="notification" class="toast-notification"></div>
+    <script src="../../renderer.js"></script>
 
-      .popup {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background-color: rgba(0, 0, 0, 0.5);
-        display: flex;
-        justify-content: center;
-        align-items: center;
-      }
-
-      .popup-content {
-        background-color: white;
-        padding: 20px;
-        width: 70%;
-        border-radius: 5px;
-        text-align: center;
-      }
-
-      #notification {
-        position: fixed;
-        bottom: 20px;
-        right: 20px;
-        color: white;
-        padding: 15px;
-        border-radius: 5px;
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-        opacity: 0;
-        transition: opacity 0.5s;
-      }
-
-      #notification.show {
-        opacity: 1;
-      }
-      .container {
-        background-color: white;
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-        border-radius: 8px;
-        padding: 16px;
-        display: flex;
-        flex-direction: column;
-        height: 100%;
-      }
-      .header {
-        border-bottom: 2px solid #e2e8f0;
-        margin-bottom: 16px;
-      }
-      .header h1 {
-        font-size: 24px;
-        font-weight: 600;
-      }
-      .actions {
-        margin-top: 16px;
-      }
-      .actions h2 {
-        font-size: 18px;
-        font-weight: 600;
-      }
-      .actions button {
-        background-color: #4299e1;
-        color: white;
-        padding: 8px 16px;
-        border-radius: 4px;
-        border: none;
-        cursor: pointer;
-        margin-right: 8px;
-      }
-      .actions button:hover {
-        background-color: #3182ce;
-      }
-      .match-section {
-        margin-top: 16px;
-      }
-      .match-section h2 {
-        font-size: 18px;
-        font-weight: 600;
-      }
-      .match-section input[type="file"] {
-        border: 1px solid #e2e8f0;
-        padding: 8px;
-        border-radius: 4px;
-        margin-top: 8px;
-        display: block;
-        width: 100%;
-        cursor: pointer;
-      }
-      .match-section input[type="text"] {
-        border: 1px solid #e2e8f0;
-        padding: 8px;
-        border-radius: 4px;
-        margin-top: 8px;
-        display: block;
-        width: 100%;
-      }
-      .match-section button {
-        color: white;
-        padding: 8px 16px;
-        display: inline-block;
-        border-radius: 4px;
-        border: none;
-        cursor: pointer;
-        margin-top: 8px;
-      }
-      .match-section input[type="file"] {
-        /*// Give a Materal Ui theme*/
-        background-color: #fff;
-        border-radius: 4px;
-        border: 1px solid #ced4da;
-        color: #495057;
-        cursor: pointer;
-        display: inline-block;
-        font-size: 1rem;
-        line-height: 1.5;
-        padding: 0.375rem 0.75rem;
-        text-align: center;
-        vertical-align: middle;
-        white-space: nowrap;
-        width: 100%;
-      }
-      .match-section input[type="file"] {
-        background-color: #4299e1;
-        color: white;
-        padding: 8px 16px;
-        border-radius: 4px;
-        border: none;
-        cursor: pointer;
-        margin-right: 8px;
-      }
-      .file-upload-wrapper {
-        position: relative;
-        display: inline-block;
-      }
-      .file-upload-input {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        opacity: 0;
-        cursor: pointer;
-      }
-      .file-upload-button {
-        background-color: #3e9508;
-        color: white;
-        padding: 8px 16px;
-        border-radius: 4px;
-        border: none;
-        cursor: pointer;
-        display: inline-flex;
-        align-items: center;
-      }
-      .file-upload-button:hover {
-        background-color: #3182ce;
-      }
-    </style>
-  </head>
-  <body>
-    <div id="notification">Notification message</div>
-    <nav class="navbar">
-      <div class="navbar-container">
-        <a href="#" class="navbar-logo">
-          <img src="../../assets/logo.bmp" alt="scouting_app Icon" />
-          <span>SCOUTOPS ADMIN MENU</span>
-        </a>
-        <div class="navbar-links">
-          <a href="../home/home.html" class="hover:text-orange-400">Home</a>
-          <a
-            href="../../pages/serversHeath/serverZHeath.html"
-            class="hover:text-orange-400"
-            >Servers Health</a
-          >
-          <a
-            href="../../pages/settings/settings.html"
-            class="hover:text-orange-400"
-            >Settings</a
-          >
-        </div>
-      </div>
-    </nav>
-
-    <div class="container mx-auto p-6">
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <div class="bg-white shadow-md rounded-lg p-4">
-          <div class="border-b-2 border-gray-200 mb-4">
-            <h1 class="text-2xl font-semibold">Server 1</h1>
-          </div>
-          <div class="space-y-4">
-            <div>
-              <h2 class="text-lg font-semibold">Server Info</h2>
-              <div class="bg-gray-100 p-3 rounded-md">
-                <p class="font-medium">
-                  Server IP: <span id="server1-ip" class="font-normal"></span>
-                </p>
-              </div>
-              <div class="bg-gray-100 p-3 rounded-md">
-                <p class="font-medium">
-                  Server PORT:
-                  <span id="server1-port" class="font-normal"></span>
-                </p>
-              </div>
-              <div class="bg-gray-100 p-3 rounded-md">
-                <p class="font-medium">
-                  Server Status:
-                  <span id="server1-status" class="font-normal"></span>
-                </p>
-              </div>
-              <div class="bg-gray-100 p-3 rounded-md">
-                <p class="font-medium">
-                  Server Battery:
-                  <span id="server1-battery" class="font-normal"></span>
-                </p>
-              </div>
-              <div class="bg-gray-100 p-3 rounded-md">
-                <p class="font-medium">
-                  Server CPU Usage:
-                  <span id="server1-cpu" class="font-normal"></span>
-                </p>
-              </div>
-              <div class="bg-gray-100 p-3 rounded-md">
-                <p class="font-medium">
-                  Server Memory Usage:
-                  <span id="server1-memory" class="font-normal"></span>
-                </p>
-              </div>
+    <main class="control-container">
+        <header class="hub-header">
+            <div class="header-info">
+                <h1>Server Health</h1>
+                <p>Live status for the Scout Ops Server and all connected field devices</p>
             </div>
-            <div>
-              <h2 class="text-lg font-semibold">Server Actions</h2>
-              <div class="flex space-x-2">
-                <button
-                  id="server1-restart"
-                  class="bg-blue-500 text-white p-2 rounded-md hover:bg-blue-600"
-                >
-                  Restart
-                </button>
-                <button
-                  id="server1-shutdown"
-                  class="bg-red-500 text-white p-2 rounded-md hover:bg-red-600"
-                >
-                  Shutdown
-                </button>
-                <button
-                  id="server1-delete"
-                  class="bg-gray-500 text-white p-2 rounded-md hover:bg-gray-600"
-                  onclick="fetchServerInfo()"
-                >
-                  Refresh
-                </button>
-                <button
-                  id="server1-logs"
-                  class="bg-green-500 text-white p-2 rounded-md hover:bg-green-600"
-                  onclick="openLogs()"
-                >
-                  Logs
-                </button>
-              </div>
+            <div class="system-status">
+                <span class="status-label">Server:</span>
+                <span class="status-value" id="server-badge">Checking...</span>
             </div>
-          </div>
-        </div>
+        </header>
 
-        <div class="bg-white shadow-md rounded-lg p-4 flex flex-col h-full">
-          <div class="border-b-2 border-gray-200 mb-4">
-            <h1 class="text-2xl font-semibold">Connected Devices</h1>
-          </div>
-          <div
-            id="device-lists-container"
-            class="space-y-4 flex-1 overflow-y-auto"
-          >
-            <!-- Device lists will be populated here -->
-          </div>
-          <div class="mt-4">
-            <h2 class="text-lg font-semibold">Server Actions</h2>
-            <div class="flex space-x-2">
-              <button
-                onclick="fetchAndUpdateDevices()"
-                class="bg-blue-500 text-white p-2 rounded-md hover:bg-blue-600"
-              >
-                Refresh
-              </button>
-              <button
-                onclick="deleteAllDevices()"
-                class="bg-gray-500 text-white p-2 rounded-md hover:bg-gray-600"
-              >
-                Delete All
-              </button>
-              <button
-                onclick="openLogs()"
-                class="bg-green-500 text-white p-2 rounded-md hover:bg-green-600"
-              >
-                Logs
-              </button>
+        <!-- Top row: server info + connected devices + data collected -->
+        <div class="health-grid">
+
+            <!-- Server Info Card -->
+            <div class="health-card" id="card-server-info">
+                <div class="health-card-header">
+                    <div class="health-card-title">
+                        <span class="health-card-icon">🖥️</span>
+                        <h3>Server Info</h3>
+                    </div>
+                    <span class="status-dot offline" id="dot-server-health"></span>
+                </div>
+
+                <div class="info-rows">
+                    <div class="info-row">
+                        <span class="info-key">IP Address</span>
+                        <span class="info-val mono" id="server1-ip">—</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-key">Port</span>
+                        <span class="info-val mono" id="server1-port">—</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-key">Status</span>
+                        <span class="info-val" id="server1-status">—</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-key">Battery</span>
+                        <span class="info-val" id="server1-battery">—</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-key">CPU Usage</span>
+                        <span class="info-val" id="server1-cpu">—</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-key">Memory</span>
+                        <span class="info-val" id="server1-memory">—</span>
+                    </div>
+                </div>
+
+                <div class="card-actions" style="margin-top: 20px;">
+                    <button class="btn btn-secondary btn-sm" id="server1-restart">Restart</button>
+                    <button class="btn btn-stop btn-sm" id="server1-shutdown">Shutdown</button>
+                    <button class="btn btn-secondary btn-sm" onclick="fetchServerInfo()">Refresh</button>
+                    <button class="btn btn-secondary btn-sm" onclick="openLogs()">Logs</button>
+                </div>
             </div>
-          </div>
-        </div>
 
-        <div class="bg-white shadow-md rounded-lg p-4 flex flex-col h-full">
-          <div class="border-b-2 border-gray-200 mb-4">
-            <h1 class="text-2xl font-semibold">Data Collected</h1>
-          </div>
-          <div
-            id="data-lists-container"
-            class="space-y-4 flex-1 overflow-y-auto"
-          >
-            <!-- Device lists will be populated here -->
-          </div>
-          <div class="mt-4">
-            <h2 class="text-lg font-semibold">Server Actions</h2>
-            <div class="flex space-x-2">
-              <button
-                onclick="fetchAndUpdateData()"
-                class="bg-blue-500 text-white p-2 rounded-md hover:bg-blue-600"
-              >
-                Refresh
-              </button>
-              <button
-                onclick="openLogs()"
-                class="bg-green-500 text-white p-2 rounded-md hover:bg-green-600"
-              >
-                Logs
-              </button>
+            <!-- Connected Devices Card -->
+            <div class="health-card">
+                <div class="health-card-header">
+                    <div class="health-card-title">
+                        <span class="health-card-icon">📱</span>
+                        <h3>Connected Devices</h3>
+                    </div>
+                    <span class="device-count-badge" id="device-count">0</span>
+                </div>
+
+                <div id="device-lists-container" class="device-list-body">
+                    <div class="empty-state">No devices connected</div>
+                </div>
+
+                <div class="card-actions" style="margin-top: 16px;">
+                    <button class="btn btn-secondary btn-sm" onclick="fetchAndUpdateDevices()">Refresh</button>
+                    <button class="btn btn-stop btn-sm" onclick="deleteAllDevices()">Delete All</button>
+                    <button class="btn btn-secondary btn-sm" onclick="openLogs()">Logs</button>
+                </div>
             </div>
-          </div>
-        </div>
 
-        <div class="container">
-          <div class="match-section">
-            <h2>Current Match</h2>
-            <p id="current-match"></p>
+            <!-- Data Collected Card -->
+            <div class="health-card">
+                <div class="health-card-header">
+                    <div class="health-card-title">
+                        <span class="health-card-icon">📊</span>
+                        <h3>Data Collected</h3>
+                    </div>
+                    <span class="device-count-badge" id="data-count">0</span>
+                </div>
 
-            <label for="new-match-file"></label
-            ><input
-              type="text"
-              id="new-match-file"
-              placeholder="Enter new match key"
-            />
-            <button
-              class="bg-blue-500 text-white p-2 rounded-md hover:bg-blue-600"
-              onclick="uploadEvent()"
-            >
-              Send Event
-            </button>
-            <button
-              class="bg-red-500 text-white p-2 rounded-md hover:bg-red-600"
-              onclick="clearEvent()"
-            >
-              Clear MatchFile
-            </button>
-            <div class="file-upload-wrapper">
-              <button class="file-upload-button" id="customFileButton">
-                Choose File
-              </button>
-              <input
-                type="file"
-                class="file-upload-input"
-                id="event-file"
-                accept=".json"
-                onchange="updateFileName()"
-              />
+                <div id="data-lists-container" class="device-list-body">
+                    <div class="empty-state">No data records yet</div>
+                </div>
+
+                <div class="card-actions" style="margin-top: 16px;">
+                    <button class="btn btn-secondary btn-sm" onclick="fetchAndUpdateData()">Refresh</button>
+                    <button class="btn btn-secondary btn-sm" onclick="openLogs()">Logs</button>
+                </div>
             </div>
-          </div>
+
         </div>
 
-        <div class="bg-white shadow-md rounded-lg p-4 flex flex-col h-full">
-          <div class="border-b-2 border-gray-200 mb-4">
-            <h1 class="text-2xl font-semibold">Check Scouters</h1>
-          </div>
-          <div class="flex space-x-2">
-           <p> Hey, Ritesh here, This feature is not implemented yet, since i dont know how the api looks like yet</p>
+        <!-- Bottom row: match control + scouter check + data recording -->
+        <div class="health-grid health-grid--bottom">
+
+            <!-- Current Match Card -->
+            <div class="health-card match-card">
+                <div class="health-card-header">
+                    <div class="health-card-title">
+                        <span class="health-card-icon">🏆</span>
+                        <h3>Current Match</h3>
+                    </div>
+                    <span class="match-key-badge" id="current-match">No match loaded</span>
+                </div>
+
+                <div class="field-group">
+                    <label class="field-label" for="new-match-file">Match Key</label>
+                    <input
+                        type="text"
+                        id="new-match-file"
+                        class="field-input"
+                        placeholder="e.g. 2026miket_qm1"
+                    />
+                </div>
+
+                <div class="card-actions">
+                    <button class="btn btn-primary btn-sm" onclick="uploadEvent()">Send Event</button>
+                    <button class="btn btn-stop btn-sm" onclick="clearEvent()">Clear</button>
+                </div>
+
+                <div class="file-upload-row">
+                    <label class="field-label" style="margin-bottom: 8px; display:block;">Upload Match JSON</label>
+                    <div class="file-upload-wrapper">
+                        <button class="btn btn-secondary btn-sm file-upload-button" id="customFileButton">
+                            📁 Choose File
+                        </button>
+                        <input
+                            type="file"
+                            class="file-upload-input"
+                            id="event-file"
+                            accept=".json"
+                            onchange="updateFileName()"
+                        />
+                    </div>
+                </div>
+            </div>
+
+            <!-- Check Scouters Card -->
+            <div class="health-card">
+                <div class="health-card-header">
+                    <div class="health-card-title">
+                        <span class="health-card-icon">👥</span>
+                        <h3>Check Scouters</h3>
+                    </div>
+                </div>
+                <div class="stub-notice">
+                    <span class="stub-icon">🚧</span>
+                    <div>
+                        <p class="stub-title">Coming Soon</p>
+                        <p class="stub-desc">Scouter assignment verification is not yet implemented — API spec pending.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Data Recording Card -->
+            <div class="health-card">
+                <div class="health-card-header">
+                    <div class="health-card-title">
+                        <span class="health-card-icon">💾</span>
+                        <h3>Data Recording</h3>
+                    </div>
+                </div>
+                <p class="health-card-desc">Export all collected scouting data as a CSV file for offline analysis.</p>
+                <div class="card-actions">
+                    <button class="btn btn-primary btn-sm" id="download-button" onclick="downloadCSV()">
+                        ⬇ Download CSV
+                    </button>
+                </div>
+            </div>
+
         </div>
+    </main>
 
-        <div class="bg-white shadow-md rounded-lg p-4 flex flex-col h-full">
-          <div class="border-b-2 border-gray-200 mb-4">
-            <h1 class="text-2xl font-semibold">Data Recording</h1>
-          </div>
-          <div class="flex space-x-2">
-                       <button
-              id="download-button"
-              class="bg-blue-500 text-white p-2 rounded-md hover:bg-blue-600"
-              onclick="downloadCSV()"
-            >
-              Download CSV
-            </button>
-          </div>
+    <!-- Device Popup -->
+    <div id="device-popup" class="popup-overlay" style="display:none;">
+        <div class="popup-card">
+            <h3 id="popup-title">Device Details</h3>
+            <pre id="popup-content" class="popup-json"></pre>
+            <button class="btn btn-secondary" onclick="closePopup()">Close</button>
         </div>
-
-        
-
-        
-
-      </div>
     </div>
+
     <script src="serverZHeath.js"></script>
     <script>
-      function closePopup() {
-        const popup = document.querySelector(".popup");
-        if (popup) {
-          popup.remove();
+        function closePopup() {
+            document.getElementById('device-popup').style.display = 'none';
         }
-      }
-      function updateFileName() {
-        const fileInput = document.getElementById("event-file");
-        const fileButton = document.getElementById("customFileButton");
-        if (fileInput.files.length > 0) {
-          fileButton.textContent = fileInput.files[0].name;
-        } else {
-          fileButton.textContent = "Choose File";
+        function updateFileName() {
+            const fileInput = document.getElementById('event-file');
+            const fileButton = document.getElementById('customFileButton');
+            fileButton.textContent = fileInput.files.length > 0
+                ? `📄 ${fileInput.files[0].name}`
+                : '📁 Choose File';
         }
-      }
     </script>
-  </body>
+</body>
 </html>

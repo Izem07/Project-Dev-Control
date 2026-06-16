@@ -284,7 +284,7 @@ class _EventEntryScreenState extends State<EventEntryScreen>
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
                             Row(children: [
-                              Icon(Icons.upload_file_rounded,
+                              const Icon(Icons.upload_file_rounded,
                                   size: 18, color: AppTheme.accent),
                               const SizedBox(width: 8),
                               Text('CSV File',
@@ -328,7 +328,7 @@ class _EventEntryScreenState extends State<EventEntryScreen>
                                     padding: const EdgeInsets.symmetric(
                                         horizontal: 14),
                                   ),
-                                  child: Text('Browse',
+                                  child: const Text('Browse',
                                       style: TextStyle(
                                           color: AppTheme.accent,
                                           fontSize: 13)),
@@ -368,7 +368,7 @@ class _EventEntryScreenState extends State<EventEntryScreen>
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
                             Row(children: [
-                              Icon(Icons.storage_rounded,
+                              const Icon(Icons.storage_rounded,
                                   size: 18, color: AppTheme.gold),
                               const SizedBox(width: 8),
                               Text('Neon Database',

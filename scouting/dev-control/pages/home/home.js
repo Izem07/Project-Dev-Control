@@ -1,71 +1,58 @@
+// home.js — Server Sync page logic
+
+function showStatus(message, type) {
+    const el = document.getElementById('connect-status');
+    el.textContent = message;
+    el.className = `connect-status ${type}`;
+    el.style.display = 'block';
+}
+
 async function connect(event) {
     event.preventDefault();
-    let ipElement = document.querySelector('#serveraddress');
-    let portElement = document.querySelector('#port');
-    
-    // Debugging statements
-    console.log('IP Element:', ipElement);
-    console.log('Port Element:', portElement);
-    
-    if (ipElement && portElement) {
-        let ip = ipElement.value;
-        let port = portElement.value;
-        
-        // Debugging statements
-        console.log('IP:', ip);
-        console.log('Port:', port);
-        
-        // Save the IP and port using ipcRenderer
-        await window.electron.saveIpPort(ip, port);
-        
-        try {
-            let response = await fetch(`http://${ip}:${port}/`, {
-                method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json'
-                }
-            });
-            
-            if (response.status === 200) {
-                console.log('Server is available');
+
+    const ip   = document.getElementById('serveraddress').value.trim();
+    const port = document.getElementById('port').value.trim();
+
+    if (!ip || !port) return;
+
+    showStatus('Connecting...', 'connecting');
+
+    // Persist for next session
+    await window.electron.saveIpPort(ip, port);
+
+    try {
+        const response = await fetch(`http://${ip}:${port}/`, {
+            method: 'GET',
+            signal: AbortSignal.timeout(4000)
+        });
+
+        if (response.ok) {
+            showStatus('✅ Connected! Redirecting to Server Health...', 'success');
+            setTimeout(() => {
                 window.location.href = '../serversHeath/serverZHeath.html';
-            } else {
-                alert('Server is not available');
-            }
-        } catch (e) {
-            alert('Server is not available');
+            }, 800);
+        } else {
+            showStatus(`❌ Server responded with status ${response.status}. Check if Scout Ops Server is running.`, 'error');
         }
-    } else {
-        console.error('Could not find IP or Port input elements');
+    } catch (e) {
+        showStatus(`❌ Could not reach ${ip}:${port} — make sure the server is running and reachable.`, 'error');
     }
 }
 
-// Function to load saved IP and port on page load
-async function loadSavedIpPort() {
+async function loadSaved() {
     const { ip, port } = await window.electron.getIpPort();
-    
-    let ipElement = document.querySelector('#serveraddress');
-    let portElement = document.querySelector('#port');
-    
-    // Debugging statements
-    console.log('IP Element on load:', ipElement);
-    console.log('Port Element on load:', portElement);
-    
-    if (ipElement && portElement) {
-        if (ip) {
-            ipElement.value = ip;
-        }
-        if (port) {
-            portElement.value = port;
-        }
-    } else {
-        console.error('Could not find IP or Port input elements on load');
-    }
+    if (ip) document.getElementById('serveraddress').value = ip;
+    if (port) document.getElementById('port').value = port;
+    showStatus('Loaded saved connection settings.', 'connecting');
+    setTimeout(() => {
+        const el = document.getElementById('connect-status');
+        if (el) el.style.display = 'none';
+    }, 2000);
 }
 
-window.onload = loadSavedIpPort;
-
-
-
-// Call the function to create the nav bar
-
+window.onload = async () => {
+    // Pre-fill saved values silently on load
+    const { ip, port } = await window.electron.getIpPort();
+    if (ip) document.getElementById('serveraddress').value = ip;
+    if (port) document.getElementById('port').value = port;
+};

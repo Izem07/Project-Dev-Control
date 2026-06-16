@@ -91,8 +91,9 @@ class NeonService {
       connStr = connStr.trim();
       // Remove scheme
       var rest = connStr;
-      if (rest.startsWith('postgresql://')) rest = rest.substring(13);
-      else if (rest.startsWith('postgres://')) rest = rest.substring(11);
+      if (rest.startsWith('postgresql://')) {
+        rest = rest.substring(13);
+      } else if (rest.startsWith('postgres://')) rest = rest.substring(11);
 
       // Strip query params
       final qi = rest.indexOf('?');

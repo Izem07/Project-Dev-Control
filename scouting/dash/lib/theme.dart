@@ -43,7 +43,7 @@ class AppTheme {
     final base = ThemeData.dark(useMaterial3: true);
     return base.copyWith(
       scaffoldBackgroundColor: bg,
-      colorScheme: ColorScheme.dark(
+      colorScheme: const ColorScheme.dark(
         surface: surface,
         primary: accent,
         secondary: gold,

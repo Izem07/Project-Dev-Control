@@ -41,7 +41,7 @@ void main() {
   });
 
   group('MatchRow.shouldShowDelayedTime', () {
-    Match _makeMatch({
+    Match makeMatch({
       int? time,
       int? actualTime,
       int? predictedTime,
@@ -61,7 +61,7 @@ void main() {
     }
 
     test('returns false when actualTime is set', () {
-      final m = _makeMatch(
+      final m = makeMatch(
         time: 1000,
         actualTime: 1200,
         predictedTime: 1200,
@@ -70,37 +70,37 @@ void main() {
     });
 
     test('returns false when predictedTime is null', () {
-      final m = _makeMatch(time: 1000);
+      final m = makeMatch(time: 1000);
       expect(MatchRow.shouldShowDelayedTime(m), false);
     });
 
     test('returns false when time is null', () {
-      final m = _makeMatch(predictedTime: 1200);
+      final m = makeMatch(predictedTime: 1200);
       expect(MatchRow.shouldShowDelayedTime(m), false);
     });
 
     test('returns false when predicted differs by <= 60 seconds', () {
-      final m = _makeMatch(time: 1000, predictedTime: 1060);
+      final m = makeMatch(time: 1000, predictedTime: 1060);
       expect(MatchRow.shouldShowDelayedTime(m), false);
     });
 
     test('returns false when predicted differs by exactly 60 seconds', () {
-      final m = _makeMatch(time: 1000, predictedTime: 1060);
+      final m = makeMatch(time: 1000, predictedTime: 1060);
       expect(MatchRow.shouldShowDelayedTime(m), false);
     });
 
     test('returns true when predicted differs by > 60 seconds (later)', () {
-      final m = _makeMatch(time: 1000, predictedTime: 1061);
+      final m = makeMatch(time: 1000, predictedTime: 1061);
       expect(MatchRow.shouldShowDelayedTime(m), true);
     });
 
     test('returns true when predicted differs by > 60 seconds (earlier)', () {
-      final m = _makeMatch(time: 1000, predictedTime: 939);
+      final m = makeMatch(time: 1000, predictedTime: 939);
       expect(MatchRow.shouldShowDelayedTime(m), true);
     });
 
     test('returns true for large delay', () {
-      final m = _makeMatch(time: 1000, predictedTime: 2000);
+      final m = makeMatch(time: 1000, predictedTime: 2000);
       expect(MatchRow.shouldShowDelayedTime(m), true);
     });
   });
