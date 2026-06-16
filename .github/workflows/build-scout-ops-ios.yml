@@ -1,17 +1,17 @@
-name: Build Scout Ops iOS
+name: Build Scout Ops iOS (All Apps)
 
 on:
   workflow_dispatch:
     inputs:
       version:
-        description: "Version number (e.g. 1.2.0)"
+        description: "Version number (e.g. 1.3.0)"
         required: true
       release_notes:
         description: "What's new in this release"
         required: false
         default: "Bug fixes and performance improvements."
       codesign:
-        description: "Sign the IPA (requires Apple certs in secrets)"
+        description: "Sign the IPAs (requires Apple certs in secrets)"
         required: true
         default: "false"
         type: choice
@@ -21,8 +21,8 @@ on:
 
 jobs:
   build-ios:
-    name: Build & Release iOS IPA
-    runs-on: macos-latest          # ← Must be macOS — Xcode is required
+    name: Build & Release All iOS IPAs
+    runs-on: macos-latest          # Xcode required — must be macOS
     permissions:
       contents: write
 
@@ -37,19 +37,22 @@ jobs:
         with:
           channel: stable
 
-      # ── 3. Xcode version ─────────────────────────────────────────────────────
+      # ── 3. Xcode ─────────────────────────────────────────────────────────────
       - name: Select latest stable Xcode
         uses: maxim-lobanov/setup-xcode@v1
         with:
           xcode-version: latest-stable
 
-      # ── 4. Bump version in pubspec ────────────────────────────────────────────
-      - name: Bump version
-        working-directory: scouting/android
+      # ── 4. Bump version in all pubspecs ───────────────────────────────────────
+      - name: Bump versions
         run: |
-          sed -i '' "s/^version: .*/version: ${{ inputs.version }}+${{ github.run_number }}/" pubspec.yaml
+          V="${{ inputs.version }}+${{ github.run_number }}"
+          sed -i '' "s/^version: .*/version: $V/" scouting/android/pubspec.yaml
+          sed -i '' "s/^version: .*/version: $V/" scouting/scan/pubspec.yaml
+          sed -i '' "s/^version: .*/version: $V/" scouting/dash/pubspec.yaml
+          sed -i '' "s/^version: .*/version: $V/" scouting/match-viewer/pubspec.yaml
 
-      # ── 5. Apple code signing setup (signed builds only) ──────────────────────
+      # ── 5. Apple code signing (signed builds only) ────────────────────────────
       - name: Import Apple Distribution Certificate
         if: inputs.codesign == 'true'
         env:
@@ -57,118 +60,200 @@ jobs:
           CERTIFICATE_PASSWORD: ${{ secrets.APPLE_DIST_CERT_PASSWORD }}
           KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
         run: |
-          # Create a temporary keychain
           security create-keychain -p "$KEYCHAIN_PASSWORD" build.keychain
           security default-keychain -s build.keychain
           security unlock-keychain -p "$KEYCHAIN_PASSWORD" build.keychain
           security set-keychain-settings -t 3600 -u build.keychain
-
-          # Import certificate
           echo "$CERTIFICATE_BASE64" | base64 --decode > dist_cert.p12
           security import dist_cert.p12 \
-            -k build.keychain \
-            -P "$CERTIFICATE_PASSWORD" \
-            -T /usr/bin/codesign
+            -k build.keychain -P "$CERTIFICATE_PASSWORD" -T /usr/bin/codesign
           security set-key-partition-list \
-            -S apple-tool:,apple: \
-            -s -k "$KEYCHAIN_PASSWORD" build.keychain
+            -S apple-tool:,apple: -s -k "$KEYCHAIN_PASSWORD" build.keychain
 
-      - name: Install provisioning profile
+      - name: Install provisioning profiles
         if: inputs.codesign == 'true'
         env:
-          PROVISIONING_PROFILE_BASE64: ${{ secrets.APPLE_PROVISIONING_PROFILE_BASE64 }}
+          PP_ANDROID: ${{ secrets.APPLE_PP_ANDROID_BASE64 }}
+          PP_SCAN:    ${{ secrets.APPLE_PP_SCAN_BASE64 }}
+          PP_DASH:    ${{ secrets.APPLE_PP_DASH_BASE64 }}
+          PP_VIEWER:  ${{ secrets.APPLE_PP_VIEWER_BASE64 }}
         run: |
           mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
-          echo "$PROVISIONING_PROFILE_BASE64" | base64 --decode \
-            > ~/Library/MobileDevice/Provisioning\ Profiles/scout_ops.mobileprovision
+          echo "$PP_ANDROID" | base64 --decode > ~/Library/MobileDevice/Provisioning\ Profiles/scout_ops_android.mobileprovision
+          echo "$PP_SCAN"    | base64 --decode > ~/Library/MobileDevice/Provisioning\ Profiles/scout_ops_scan.mobileprovision
+          echo "$PP_DASH"    | base64 --decode > ~/Library/MobileDevice/Provisioning\ Profiles/scout_ops_dash.mobileprovision
+          echo "$PP_VIEWER"  | base64 --decode > ~/Library/MobileDevice/Provisioning\ Profiles/scout_ops_viewer.mobileprovision
 
-      # ── 6. Dependencies ──────────────────────────────────────────────────────
-      - name: Install Flutter dependencies
+      # ── 6. Build: Scout Ops Android (main scouting app) ───────────────────────
+      - name: Dependencies — Scout Ops Android
         working-directory: scouting/android
         run: flutter pub get
 
-      # ── 7. Install CocoaPods dependencies ─────────────────────────────────────
-      - name: Install CocoaPods
+      - name: CocoaPods — Scout Ops Android
         working-directory: scouting/android/ios
         run: pod install --repo-update
 
-      # ── 8. Build IPA ──────────────────────────────────────────────────────────
-      - name: Build IPA (unsigned)
-        if: inputs.codesign == 'false'
+      - name: Build IPA — Scout Ops Android
         working-directory: scouting/android
-        run: flutter build ipa --no-codesign --no-tree-shake-icons
-
-      - name: Build IPA (signed)
-        if: inputs.codesign == 'true'
-        working-directory: scouting/android
-        run: flutter build ipa --no-tree-shake-icons
-
-      # ── 9. Package artifacts ──────────────────────────────────────────────────
-      - name: Package iOS build
         run: |
-          VERSION="${{ inputs.version }}"
-          cd scouting/android/build/ios
-
-          # Signed build produces an .ipa directly; unsigned produces an archive
           if [ "${{ inputs.codesign }}" = "true" ]; then
-            cp iphoneos/Scout\ Ops.ipa \
-               "../../../../scout_ops_ios_${VERSION}.ipa" 2>/dev/null || \
-            cp iphoneos/*.ipa \
-               "../../../../scout_ops_ios_${VERSION}.ipa"
+            flutter build ipa --no-tree-shake-icons
           else
-            # Pack the unsigned archive as a tarball for sideloading / CI testing
-            tar -czf "../../../../scout_ops_ios_${VERSION}_unsigned.tar.gz" archive
+            flutter build ipa --no-codesign --no-tree-shake-icons
           fi
 
-      # ── 10. Upload build artifacts ────────────────────────────────────────────
-      - name: Upload IPA artifact
+      # ── 7. Build: Scout Ops Scan ──────────────────────────────────────────────
+      - name: Dependencies — Scout Ops Scan
+        working-directory: scouting/scan
+        run: flutter pub get
+
+      - name: CocoaPods — Scout Ops Scan
+        working-directory: scouting/scan/ios
+        run: pod install --repo-update
+
+      - name: Build IPA — Scout Ops Scan
+        working-directory: scouting/scan
+        run: |
+          if [ "${{ inputs.codesign }}" = "true" ]; then
+            flutter build ipa --no-tree-shake-icons
+          else
+            flutter build ipa --no-codesign --no-tree-shake-icons
+          fi
+
+      # ── 8. Build: Scout Ops Dash ──────────────────────────────────────────────
+      - name: Dependencies — Scout Ops Dash
+        working-directory: scouting/dash
+        run: flutter pub get
+
+      - name: CocoaPods — Scout Ops Dash
+        working-directory: scouting/dash/ios
+        run: pod install --repo-update
+
+      - name: Build IPA — Scout Ops Dash
+        working-directory: scouting/dash
+        run: |
+          if [ "${{ inputs.codesign }}" = "true" ]; then
+            flutter build ipa --no-tree-shake-icons
+          else
+            flutter build ipa --no-codesign --no-tree-shake-icons
+          fi
+
+      # ── 9. Build: Scout Ops Match Viewer ──────────────────────────────────────
+      - name: Dependencies — Match Viewer
+        working-directory: scouting/match-viewer
+        run: flutter pub get
+
+      - name: CocoaPods — Match Viewer
+        working-directory: scouting/match-viewer/ios
+        run: pod install --repo-update
+
+      - name: Build IPA — Match Viewer
+        working-directory: scouting/match-viewer
+        run: |
+          if [ "${{ inputs.codesign }}" = "true" ]; then
+            flutter build ipa --no-tree-shake-icons
+          else
+            flutter build ipa --no-codesign --no-tree-shake-icons
+          fi
+
+      # ── 10. Collect & package all builds ──────────────────────────────────────
+      - name: Collect artifacts
+        run: |
+          V="${{ inputs.version }}"
+          SIGNED="${{ inputs.codesign }}"
+
+          collect_app() {
+            local name=$1
+            local dir=$2
+            local out=$3
+
+            if [ "$SIGNED" = "true" ]; then
+              # Signed: grab the .ipa from the iphoneos output
+              IPA=$(find "${dir}/build/ios/iphoneos" -name "*.ipa" 2>/dev/null | head -1)
+              [ -n "$IPA" ] && cp "$IPA" "${out}" || echo "⚠️  No signed IPA found for ${name}"
+            else
+              # Unsigned: tar the xcarchive
+              ARCHIVE=$(find "${dir}/build/ios" -name "*.xcarchive" -o -name "archive" -type d 2>/dev/null | head -1)
+              [ -n "$ARCHIVE" ] && tar -czf "${out}" "$ARCHIVE" || \
+              tar -czf "${out}" "${dir}/build/ios/archive" 2>/dev/null || \
+              echo "⚠️  No archive found for ${name}"
+            fi
+          }
+
+          if [ "$SIGNED" = "true" ]; then
+            collect_app "android"      "scouting/android"      "scout_ops_android_${V}.ipa"
+            collect_app "scan"         "scouting/scan"         "scout_ops_scan_${V}.ipa"
+            collect_app "dash"         "scouting/dash"         "scout_ops_dash_${V}.ipa"
+            collect_app "match-viewer" "scouting/match-viewer" "scout_ops_match_viewer_${V}.ipa"
+          else
+            collect_app "android"      "scouting/android"      "scout_ops_android_${V}_unsigned.tar.gz"
+            collect_app "scan"         "scouting/scan"         "scout_ops_scan_${V}_unsigned.tar.gz"
+            collect_app "dash"         "scouting/dash"         "scout_ops_dash_${V}_unsigned.tar.gz"
+            collect_app "match-viewer" "scouting/match-viewer" "scout_ops_match_viewer_${V}_unsigned.tar.gz"
+          fi
+
+      # ── 11. Upload artifacts ──────────────────────────────────────────────────
+      - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: scout-ops-ios-${{ inputs.version }}
+          name: scout-ops-ios-all-${{ inputs.version }}
           path: |
-            scout_ops_ios_${{ inputs.version }}.ipa
-            scout_ops_ios_${{ inputs.version }}_unsigned.tar.gz
+            scout_ops_android_${{ inputs.version }}*.ipa
+            scout_ops_scan_${{ inputs.version }}*.ipa
+            scout_ops_dash_${{ inputs.version }}*.ipa
+            scout_ops_match_viewer_${{ inputs.version }}*.ipa
+            scout_ops_android_${{ inputs.version }}*_unsigned.tar.gz
+            scout_ops_scan_${{ inputs.version }}*_unsigned.tar.gz
+            scout_ops_dash_${{ inputs.version }}*_unsigned.tar.gz
+            scout_ops_match_viewer_${{ inputs.version }}*_unsigned.tar.gz
           if-no-files-found: ignore
           retention-days: 30
 
-      # ── 11. GitHub Release ────────────────────────────────────────────────────
+      # ── 12. GitHub Release ────────────────────────────────────────────────────
       - name: Create GitHub Release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          VERSION="${{ inputs.version }}"
+          V="${{ inputs.version }}"
           SIGNED="${{ inputs.codesign }}"
           NOTES="${{ inputs.release_notes }}"
 
           if [ "$SIGNED" = "true" ]; then
-            ARTIFACT="scout_ops_ios_${VERSION}.ipa"
-            ARTIFACT_DESC="- \`${ARTIFACT}\` — Signed IPA, ready to distribute via TestFlight or direct install"
+            EXT="ipa"
             SIGN_NOTE="✅ **Signed** — distribute via TestFlight or AltStore"
+            INSTALL_NOTE="Upload to TestFlight via Transporter, or install directly with Apple Configurator 2."
           else
-            ARTIFACT="scout_ops_ios_${VERSION}_unsigned.tar.gz"
-            ARTIFACT_DESC="- \`${ARTIFACT}\` — Unsigned archive (sideload via AltStore / Xcode, or sign locally)"
+            EXT="tar.gz"
             SIGN_NOTE="⚠️ **Unsigned** — requires local signing before device install"
+            INSTALL_NOTE="Extract the .tar.gz and open the .xcarchive in Xcode Organizer to sign and export, or use AltStore to sideload."
           fi
 
+          FILES=$(ls scout_ops_*_${V}*.${EXT} scout_ops_*_${V}*_unsigned.${EXT} 2>/dev/null | tr '\n' ' ')
+
           cat > release_notes.md <<EOF
-          ## 🍎 Scout Ops iOS — v${VERSION}
+          ## 🍎 Scout Ops Suite — iOS v${V}
 
           ${SIGN_NOTE}
 
           ${NOTES}
 
-          ### Artifacts
-          ${ARTIFACT_DESC}
+          ### Included Apps
+          | App | File |
+          |-----|------|
+          | Scout Ops Android | \`scout_ops_android_${V}.${EXT}\` |
+          | Scout Ops Scan    | \`scout_ops_scan_${V}.${EXT}\` |
+          | Scout Ops Dash    | \`scout_ops_dash_${V}.${EXT}\` |
+          | Match Viewer      | \`scout_ops_match_viewer_${V}.${EXT}\` |
 
           ### Installing on Device
-          $([ "$SIGNED" = "true" ] && echo "Upload the IPA to TestFlight via Transporter, or install directly with Apple Configurator 2." || echo "Open the .tar.gz, then drag the .xcarchive into Xcode Organizer to sign and export, or use AltStore to sideload.")
+          ${INSTALL_NOTE}
 
           **Built from:** \`${{ github.sha }}\`
           **Run:** [#${{ github.run_number }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
           EOF
 
-          gh release create "ios-v${VERSION}" \
-            "$ARTIFACT" \
-            --title "Scout Ops iOS v${VERSION}" \
+          gh release create "ios-v${V}" \
+            $FILES \
+            --title "Scout Ops Suite — iOS v${V}" \
             --notes-file release_notes.md \
             --prerelease=$([ "$SIGNED" = "false" ] && echo "true" || echo "false")

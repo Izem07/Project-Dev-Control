@@ -1,10 +1,10 @@
-name: Build Scout Ops Android
+name: Build Scout Ops Android (All Apps)
 
 on:
   workflow_dispatch:
     inputs:
       version:
-        description: "Version number (e.g. 1.2.0)"
+        description: "Version number (e.g. 1.3.0)"
         required: true
       release_notes:
         description: "What's new in this release"
@@ -21,7 +21,7 @@ on:
 
 jobs:
   build-android:
-    name: Build & Release Android APK
+    name: Build & Release All Android APKs
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -44,18 +44,20 @@ jobs:
         with:
           channel: stable
 
-      # ── 4. Bump version in pubspec ────────────────────────────────────────────
-      - name: Bump version
-        working-directory: scouting/android
+      # ── 4. Bump version in all pubspecs ───────────────────────────────────────
+      - name: Bump versions
         run: |
-          sed -i "s/^version: .*/version: ${{ inputs.version }}+${{ github.run_number }}/" pubspec.yaml
+          V="${{ inputs.version }}+${{ github.run_number }}"
+          sed -i "s/^version: .*/version: $V/" scouting/android/pubspec.yaml
+          sed -i "s/^version: .*/version: $V/" scouting/scan/pubspec.yaml
+          sed -i "s/^version: .*/version: $V/" scouting/dash/pubspec.yaml
+          sed -i "s/^version: .*/version: $V/" scouting/match-viewer/pubspec.yaml
 
       # ── 5. Keystore setup (release only) ──────────────────────────────────────
       - name: Decode keystore
         if: inputs.build_type == 'release'
         working-directory: scouting/android
-        run: |
-          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > android/app/keystore.jks
+        run: echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > android/app/keystore.jks
 
       - name: Create key.properties
         if: inputs.build_type == 'release'
@@ -66,75 +68,100 @@ jobs:
           echo "keyAlias=${{ secrets.KEY_ALIAS }}"              >> android/key.properties
           echo "storeFile=keystore.jks"                         >> android/key.properties
 
-      # ── 6. Dependencies ──────────────────────────────────────────────────────
-      - name: Install dependencies
+      # ── 6. Build: Scout Ops Android (main scouting app) ───────────────────────
+      - name: Build Scout Ops Android
         working-directory: scouting/android
-        run: flutter pub get
+        run: |
+          flutter pub get
+          flutter build apk --${{ inputs.build_type }} --no-tree-shake-icons
 
-      # ── 7. Build APK ─────────────────────────────────────────────────────────
-      - name: Build APK (${{ inputs.build_type }})
-        working-directory: scouting/android
-        run: flutter build apk --${{ inputs.build_type }} --no-tree-shake-icons
-
-      # ── 8. Build App Bundle (release only) ────────────────────────────────────
-      - name: Build App Bundle
+      - name: Build Scout Ops Android App Bundle
         if: inputs.build_type == 'release'
         working-directory: scouting/android
         run: flutter build appbundle --no-tree-shake-icons
 
-      # ── 9. Rename artifacts ───────────────────────────────────────────────────
-      - name: Rename artifacts
+      # ── 7. Build: Scout Ops Scan ──────────────────────────────────────────────
+      - name: Build Scout Ops Scan
+        working-directory: scouting/scan
         run: |
-          VERSION="${{ inputs.version }}"
-          TYPE="${{ inputs.build_type }}"
-          cp "scouting/android/build/app/outputs/flutter-apk/app-${TYPE}.apk" \
-             "scout_ops_android_${VERSION}.apk"
-          if [ "$TYPE" = "release" ]; then
-            cp "scouting/android/build/app/outputs/bundle/release/app-release.aab" \
-               "scout_ops_android_${VERSION}.aab"
+          flutter pub get
+          flutter build apk --${{ inputs.build_type }} --no-tree-shake-icons
+
+      # ── 8. Build: Scout Ops Dash ──────────────────────────────────────────────
+      - name: Build Scout Ops Dash
+        working-directory: scouting/dash
+        run: |
+          flutter pub get
+          flutter build apk --${{ inputs.build_type }} --no-tree-shake-icons
+
+      # ── 9. Build: Scout Ops Match Viewer ──────────────────────────────────────
+      - name: Build Scout Ops Match Viewer
+        working-directory: scouting/match-viewer
+        run: |
+          flutter pub get
+          flutter build apk --${{ inputs.build_type }} --no-tree-shake-icons
+
+      # ── 10. Collect & rename all APKs ─────────────────────────────────────────
+      - name: Collect artifacts
+        run: |
+          V="${{ inputs.version }}"
+          T="${{ inputs.build_type }}"
+          cp "scouting/android/build/app/outputs/flutter-apk/app-${T}.apk"      "scout_ops_android_${V}.apk"
+          cp "scouting/scan/build/app/outputs/flutter-apk/app-${T}.apk"         "scout_ops_scan_${V}.apk"
+          cp "scouting/dash/build/app/outputs/flutter-apk/app-${T}.apk"         "scout_ops_dash_${V}.apk"
+          cp "scouting/match-viewer/build/app/outputs/flutter-apk/app-${T}.apk" "scout_ops_match_viewer_${V}.apk"
+          if [ "$T" = "release" ]; then
+            cp "scouting/android/build/app/outputs/bundle/release/app-release.aab" "scout_ops_android_${V}.aab"
           fi
 
-      # ── 10. Upload build artifacts ────────────────────────────────────────────
-      - name: Upload APK artifact
+      # ── 11. Upload artifacts ──────────────────────────────────────────────────
+      - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: scout-ops-android-${{ inputs.version }}-${{ inputs.build_type }}
+          name: scout-ops-android-all-${{ inputs.version }}-${{ inputs.build_type }}
           path: |
             scout_ops_android_${{ inputs.version }}.apk
+            scout_ops_scan_${{ inputs.version }}.apk
+            scout_ops_dash_${{ inputs.version }}.apk
+            scout_ops_match_viewer_${{ inputs.version }}.apk
             scout_ops_android_${{ inputs.version }}.aab
           if-no-files-found: ignore
           retention-days: 30
 
-      # ── 11. GitHub Release ────────────────────────────────────────────────────
+      # ── 12. GitHub Release ────────────────────────────────────────────────────
       - name: Create GitHub Release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          VERSION="${{ inputs.version }}"
-          TYPE="${{ inputs.build_type }}"
+          V="${{ inputs.version }}"
+          T="${{ inputs.build_type }}"
           NOTES="${{ inputs.release_notes }}"
 
-          # Build file list — AAB only exists for release builds
-          FILES="scout_ops_android_${VERSION}.apk"
-          if [ "$TYPE" = "release" ] && [ -f "scout_ops_android_${VERSION}.aab" ]; then
-            FILES="$FILES scout_ops_android_${VERSION}.aab"
+          FILES="scout_ops_android_${V}.apk scout_ops_scan_${V}.apk scout_ops_dash_${V}.apk scout_ops_match_viewer_${V}.apk"
+          if [ "$T" = "release" ] && [ -f "scout_ops_android_${V}.aab" ]; then
+            FILES="$FILES scout_ops_android_${V}.aab"
           fi
 
           cat > release_notes.md <<EOF
-          ## 🤖 Scout Ops Android — v${VERSION} (${TYPE})
+          ## 🤖 Scout Ops Suite — Android v${V} (${T})
 
           ${NOTES}
 
-          ### Artifacts
-          - \`scout_ops_android_${VERSION}.apk\` — Install directly on Android tablets
-          $([ "$TYPE" = "release" ] && echo "- \`scout_ops_android_${VERSION}.aab\` — Google Play App Bundle")
+          ### Included Apps
+          | App | File |
+          |-----|------|
+          | Scout Ops Android | \`scout_ops_android_${V}.apk\` |
+          | Scout Ops Scan    | \`scout_ops_scan_${V}.apk\` |
+          | Scout Ops Dash    | \`scout_ops_dash_${V}.apk\` |
+          | Match Viewer      | \`scout_ops_match_viewer_${V}.apk\` |
+          $([ "$T" = "release" ] && echo "| Android App Bundle | \`scout_ops_android_${V}.aab\` |")
 
           **Built from:** \`${{ github.sha }}\`
           **Run:** [#${{ github.run_number }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
           EOF
 
-          gh release create "android-v${VERSION}" \
+          gh release create "android-v${V}" \
             $FILES \
-            --title "Scout Ops Android v${VERSION}" \
+            --title "Scout Ops Suite — Android v${V}" \
             --notes-file release_notes.md \
-            --prerelease=$([ "$TYPE" = "debug" ] && echo "true" || echo "false")
+            --prerelease=$([ "$T" = "debug" ] && echo "true" || echo "false")
