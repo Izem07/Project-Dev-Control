@@ -142,7 +142,7 @@ Build-FlutterApp -Path "android" -Name "Scout-Ops-Android"
 Build-FlutterApp -Path "scan" -Name "Scout-Ops-Scan" -BuildWindows $false
 
 # 3. Build Desktop Client (Electron)
-Build-ElectronApp -Path "desktop-client" -Name "Scout-Ops-Desktop"
+Build-ElectronApp -Path "dev-control" -Name "ScoutOps-Admin-Menu"
 
 # 4. Build Server (Python)
 Build-PythonApp -Path "server" -EntryFile "server.py" -Name "Scout-Ops-Server" -AddData @("templates;templates/", "static;static/", "main.py;.")

@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CFBundleDevelopmentRegion</key>
+	<string>$(DEVELOPMENT_LANGUAGE)</string>
+	<key>CFBundleDisplayName</key>
+	<string>Scout Ops</string>
+	<key>CFBundleExecutable</key>
+	<string>$(EXECUTABLE_NAME)</string>
+	<key>CFBundleIdentifier</key>
+	<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+	<key>CFBundleInfoDictionaryVersion</key>
+	<string>6.0</string>
+	<key>CFBundleName</key>
+	<string>scout_ops</string>
+	<key>CFBundlePackageType</key>
+	<string>APPL</string>
+	<key>CFBundleShortVersionString</key>
+	<string>$(FLUTTER_BUILD_NAME)</string>
+	<key>CFBundleSignature</key>
+	<string>????</string>
+	<key>CFBundleVersion</key>
+	<string>$(FLUTTER_BUILD_NUMBER)</string>
+	<key>LSRequiresIPhoneOS</key>
+	<true/>
+	<key>UILaunchStoryboardName</key>
+	<string>LaunchScreen</string>
+	<key>UIMainStoryboardFile</key>
+	<string>Main</string>
+	<key>UISupportedInterfaceOrientations</key>
+	<array>
+		<string>UIInterfaceOrientationPortrait</string>
+		<string>UIInterfaceOrientationLandscapeLeft</string>
+		<string>UIInterfaceOrientationLandscapeRight</string>
+	</array>
+	<key>UISupportedInterfaceOrientations~ipad</key>
+	<array>
+		<string>UIInterfaceOrientationPortrait</string>
+		<string>UIInterfaceOrientationPortraitUpsideDown</string>
+		<string>UIInterfaceOrientationLandscapeLeft</string>
+		<string>UIInterfaceOrientationLandscapeRight</string>
+	</array>
+	<key>CADisableMinimumFrameDurationOnPhone</key>
+	<true/>
+	<key>UIApplicationSupportsIndirectInputEvents</key>
+	<true/>
+
+	<!-- Camera — used by mobile_scanner and image_picker -->
+	<key>NSCameraUsageDescription</key>
+	<string>Scout Ops uses the camera to scan QR codes and capture robot photos during scouting.</string>
+
+	<!-- Photo Library — used by image_picker -->
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Scout Ops needs access to your photo library to attach images to scouting records.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>Scout Ops saves captured scouting images to your photo library.</string>
+
+	<!-- Microphone — required by camera plugin even if audio is not actively used -->
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Scout Ops may access the microphone as part of camera usage during scouting sessions.</string>
+
+	<!-- Bluetooth — used for PAN device sync -->
+	<key>NSBluetoothAlwaysUsageDescription</key>
+	<string>Scout Ops uses Bluetooth to sync scouting data between field tablets and the server.</string>
+	<key>NSBluetoothPeripheralUsageDescription</key>
+	<string>Scout Ops uses Bluetooth to sync scouting data between field tablets and the server.</string>
+
+	<!-- Location — required by Bluetooth on iOS -->
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Scout Ops may use location to support Bluetooth device discovery during scouting events.</string>
+</dict>
+</plist>

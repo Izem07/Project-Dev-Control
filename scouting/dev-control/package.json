@@ -1,0 +1,43 @@
+{
+  "name": "scoutops-admin-menu",
+  "version": "5.6.0",
+  "main": "main.js",
+  "scripts": {
+    "test": "npm run dev",
+    "start": "electron .",
+    "pack": "electron-builder --dir",
+    "dist": "electron-builder",
+    "build": "electron-packager --out winx64 --overwrite --platform win32 --appname ScoutOps_Admin_Menu . --icon assets/logo.ico"
+  },
+  "author": "Ritesh Raj AS",
+  "license": "ISC",
+  "description": "ScoutOps Admin Menu — Dev Control for FRC Team 201 The FEDS scouting system",
+  "devDependencies": {
+    "electron": "^31.3.1",
+    "electron-builder": "^24.13.3",
+    "electron-packager": "^17.1.2",
+    "prettier": "^3.3.3"
+  },
+  "dependencies": {
+    "electron-store": "^10.0.0",
+    "node": "^20.16.0"
+  },
+  "build": {
+    "appId": "com.feds201.scoutops.admin",
+    "productName": "ScoutOps Admin Menu",
+    "files": [
+      "main.js",
+      "dist/**/*",
+      "node_modules/**/*",
+      "package.json"
+    ],
+    "win": {
+      "target": "nsis"
+    },
+    "nsis": {
+      "oneClick": true,
+      "perMachine": true,
+      "allowToChangeInstallationDirectory": true
+    }
+  }
+}

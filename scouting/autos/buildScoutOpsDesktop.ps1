@@ -2,8 +2,8 @@ param (
     [string]$BASE_DIR = "$PSScriptRoot\.."
 )
 
-# Navigate to the desktop-client directory
-Set-Location "$BASE_DIR\desktop-client"
+# Navigate to the dev-control directory
+Set-Location "$BASE_DIR\dev-control"
 
 # Prep Node environment
 Write-Host "Fetching dependencies for Scout Ops Desktop..."

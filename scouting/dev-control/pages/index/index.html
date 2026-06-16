@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ScoutOps Admin Menu</title>
+    <!-- Modern Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="control.css">
+</head>
+<body>
+    <!-- Unified Dynamic Navigation -->
+    <script src="../../renderer.js"></script>
+
+    <main class="control-container">
+        <!-- Header Section -->
+        <header class="hub-header">
+            <div class="header-info">
+                <h1>ScoutOps Admin Menu</h1>
+                <p>Dev Control — Monorepo workspace &amp; operations console for FRC Team 201 The FEDS</p>
+            </div>
+            <div class="system-status">
+                <span class="status-label">Overall Status:</span>
+                <span class="status-value pulse-green" id="overall-status">Ready</span>
+            </div>
+        </header>
+
+        <!-- Grid of Sub-Apps -->
+        <section class="apps-grid" id="apps-grid">
+            <!-- App Card: Python Server -->
+            <div class="app-card" id="card-server">
+                <div class="card-header">
+                    <div class="app-title-wrapper">
+                        <h3>Scout Ops Server</h3>
+                        <span class="port-badge" id="port-server">Port 5000</span>
+                    </div>
+                    <span class="status-dot offline" id="dot-server"></span>
+                </div>
+                <p class="app-desc">Python backend server managing local DB and Bluetooth PAN client syncs.</p>
+                <div class="card-actions">
+                    <button class="btn btn-primary btn-start" onclick="toggleApp('server')">Start Server</button>
+                    <button class="btn btn-secondary" onclick="openAppUrl('server')">Open</button>
+                </div>
+            </div>
+
+            <!-- App Card: Next.js Scout Lookup -->
+            <div class="app-card" id="card-lookup">
+                <div class="card-header">
+                    <div class="app-title-wrapper">
+                        <h3>Scout Lookup</h3>
+                        <span class="port-badge" id="port-lookup">Port 3000</span>
+                    </div>
+                    <span class="status-dot offline" id="dot-lookup"></span>
+                </div>
+                <p class="app-desc">Next.js application for querying scout reports and data search.</p>
+                <div class="card-actions">
+                    <button class="btn btn-primary btn-start" onclick="toggleApp('lookup')">Start App</button>
+                    <button class="btn btn-secondary" onclick="openAppUrl('lookup')">Open</button>
+                </div>
+            </div>
+
+            <!-- App Card: Flutter Dash -->
+            <div class="app-card" id="card-dash">
+                <div class="card-header">
+                    <div class="app-title-wrapper">
+                        <h3>Scout Analytics</h3>
+                        <span class="port-badge" id="port-dash">Port 8080</span>
+                    </div>
+                    <span class="status-dot offline" id="dot-dash"></span>
+                </div>
+                <p class="app-desc">Flutter data-analytics dashboard showing graphs and team rankings.</p>
+                <div class="card-actions">
+                    <button class="btn btn-primary btn-start" onclick="toggleApp('dash')">Start App</button>
+                    <button class="btn btn-secondary" onclick="openAppUrl('dash')">Open</button>
+                </div>
+            </div>
+
+            <!-- App Card: Flutter Match Viewer -->
+            <div class="app-card" id="card-viewer">
+                <div class="card-header">
+                    <div class="app-title-wrapper">
+                        <h3>Match Viewer</h3>
+                        <span class="port-badge" id="port-viewer">Port 8081</span>
+                    </div>
+                    <span class="status-dot offline" id="dot-viewer"></span>
+                </div>
+                <p class="app-desc">Flutter application for viewing real-time team match sheets.</p>
+                <div class="card-actions">
+                    <button class="btn btn-primary btn-start" onclick="toggleApp('viewer')">Start App</button>
+                    <button class="btn btn-secondary" onclick="openAppUrl('viewer')">Open</button>
+                </div>
+            </div>
+
+            <!-- App Card: Flutter QR Scan -->
+            <div class="app-card" id="card-scan">
+                <div class="card-header">
+                    <div class="app-title-wrapper">
+                        <h3>Scout Ops Scan</h3>
+                        <span class="port-badge" id="port-scan">Port 8082</span>
+                    </div>
+                    <span class="status-dot offline" id="dot-scan"></span>
+                </div>
+                <p class="app-desc">Flutter web scanning tool to ingest match data via QR codes.</p>
+                <div class="card-actions">
+                    <button class="btn btn-primary btn-start" onclick="toggleApp('scan')">Start App</button>
+                    <button class="btn btn-secondary" onclick="openAppUrl('scan')">Open</button>
+                </div>
+            </div>
+
+            <!-- App Card: Android Mobile Helper -->
+            <div class="app-card" id="card-android">
+                <div class="card-header">
+                    <div class="app-title-wrapper">
+                        <h3>Scout Ops Android</h3>
+                        <span class="port-badge compile-badge">Flutter</span>
+                    </div>
+                    <span class="status-dot info-dot"></span>
+                </div>
+                <p class="app-desc">Android app for mobile tablets. Builds APK for field use.</p>
+                <div class="card-actions">
+                    <button class="btn btn-primary" onclick="buildAndroidApk()">Compile APK</button>
+                </div>
+            </div>
+
+            <!-- App Card: iOS Mobile Helper -->
+            <div class="app-card" id="card-ios">
+                <div class="card-header">
+                    <div class="app-title-wrapper">
+                        <h3>Scout Ops iOS</h3>
+                        <span class="port-badge compile-badge ios-badge">Flutter</span>
+                    </div>
+                    <span class="status-dot info-dot ios-dot"></span>
+                </div>
+                <p class="app-desc">iOS app for iPads and iPhones. Builds IPA archive for field use. Requires macOS to sign &amp; deploy.</p>
+                <div class="card-actions">
+                    <button class="btn btn-primary btn-ios" onclick="buildIosIpa()">Compile IPA</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Lower Section: Console and Embedded Viewer -->
+        <section class="split-pane">
+            <!-- Left Pane: Integrated Web App Viewer -->
+            <div class="pane-card view-pane">
+                <div class="pane-header">
+                    <h2>Merged Workspace</h2>
+                    <div class="view-controls">
+                        <select id="embed-select" onchange="embedApp(this.value)">
+                            <option value="">-- Choose App to Embed --</option>
+                            <option value="lookup">Scout Lookup (Port 3000)</option>
+                            <option value="dash">Scout Analytics (Port 8080)</option>
+                            <option value="viewer">Match Viewer (Port 8081)</option>
+                            <option value="scan">QR Scanner (Port 8082)</option>
+                            <option value="server">Python Server (Port 5000)</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="iframe-container" id="iframe-container">
+                    <div class="iframe-placeholder" id="iframe-placeholder">
+                        <div class="placeholder-icon">🔗</div>
+                        <p>Select an online app above to embed its interface directly inside the Control Menu.</p>
+                    </div>
+                    <iframe id="app-iframe" src="" style="display: none;"></iframe>
+                </div>
+            </div>
+
+            <!-- Right Pane: Dev Logger Console -->
+            <div class="pane-card console-pane">
+                <div class="pane-header">
+                    <h2>Live Dev Logs</h2>
+                    <div class="console-controls">
+                        <select id="log-select" onchange="switchLogView(this.value)">
+                            <option value="server">Python Server Logs</option>
+                            <option value="lookup">Scout Lookup Logs</option>
+                            <option value="dash">Scout Analytics Logs</option>
+                            <option value="viewer">Match Viewer Logs</option>
+                            <option value="scan">QR Scanner Logs</option>
+                            <option value="android">Android Compiler Logs</option>
+                            <option value="ios">iOS Compiler Logs</option>
+                        </select>
+                        <button class="btn btn-mini" onclick="clearConsole()">Clear</button>
+                    </div>
+                </div>
+                <div class="console-body" id="console-body">
+                    <div class="log-line system-line">[System] Select an application to monitor stdout logs.</div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script src="control.js"></script>
+</body>
+</html>

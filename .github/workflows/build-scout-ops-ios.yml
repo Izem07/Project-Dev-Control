@@ -1,0 +1,174 @@
+name: Build Scout Ops iOS
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version number (e.g. 1.2.0)"
+        required: true
+      release_notes:
+        description: "What's new in this release"
+        required: false
+        default: "Bug fixes and performance improvements."
+      codesign:
+        description: "Sign the IPA (requires Apple certs in secrets)"
+        required: true
+        default: "false"
+        type: choice
+        options:
+          - "false"
+          - "true"
+
+jobs:
+  build-ios:
+    name: Build & Release iOS IPA
+    runs-on: macos-latest          # ← Must be macOS — Xcode is required
+    permissions:
+      contents: write
+
+    steps:
+      # ── 1. Checkout ──────────────────────────────────────────────────────────
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # ── 2. Flutter ───────────────────────────────────────────────────────────
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+
+      # ── 3. Xcode version ─────────────────────────────────────────────────────
+      - name: Select latest stable Xcode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
+
+      # ── 4. Bump version in pubspec ────────────────────────────────────────────
+      - name: Bump version
+        working-directory: scouting/android
+        run: |
+          sed -i '' "s/^version: .*/version: ${{ inputs.version }}+${{ github.run_number }}/" pubspec.yaml
+
+      # ── 5. Apple code signing setup (signed builds only) ──────────────────────
+      - name: Import Apple Distribution Certificate
+        if: inputs.codesign == 'true'
+        env:
+          CERTIFICATE_BASE64: ${{ secrets.APPLE_DIST_CERT_BASE64 }}
+          CERTIFICATE_PASSWORD: ${{ secrets.APPLE_DIST_CERT_PASSWORD }}
+          KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
+        run: |
+          # Create a temporary keychain
+          security create-keychain -p "$KEYCHAIN_PASSWORD" build.keychain
+          security default-keychain -s build.keychain
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" build.keychain
+          security set-keychain-settings -t 3600 -u build.keychain
+
+          # Import certificate
+          echo "$CERTIFICATE_BASE64" | base64 --decode > dist_cert.p12
+          security import dist_cert.p12 \
+            -k build.keychain \
+            -P "$CERTIFICATE_PASSWORD" \
+            -T /usr/bin/codesign
+          security set-key-partition-list \
+            -S apple-tool:,apple: \
+            -s -k "$KEYCHAIN_PASSWORD" build.keychain
+
+      - name: Install provisioning profile
+        if: inputs.codesign == 'true'
+        env:
+          PROVISIONING_PROFILE_BASE64: ${{ secrets.APPLE_PROVISIONING_PROFILE_BASE64 }}
+        run: |
+          mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
+          echo "$PROVISIONING_PROFILE_BASE64" | base64 --decode \
+            > ~/Library/MobileDevice/Provisioning\ Profiles/scout_ops.mobileprovision
+
+      # ── 6. Dependencies ──────────────────────────────────────────────────────
+      - name: Install Flutter dependencies
+        working-directory: scouting/android
+        run: flutter pub get
+
+      # ── 7. Install CocoaPods dependencies ─────────────────────────────────────
+      - name: Install CocoaPods
+        working-directory: scouting/android/ios
+        run: pod install --repo-update
+
+      # ── 8. Build IPA ──────────────────────────────────────────────────────────
+      - name: Build IPA (unsigned)
+        if: inputs.codesign == 'false'
+        working-directory: scouting/android
+        run: flutter build ipa --no-codesign --no-tree-shake-icons
+
+      - name: Build IPA (signed)
+        if: inputs.codesign == 'true'
+        working-directory: scouting/android
+        run: flutter build ipa --no-tree-shake-icons
+
+      # ── 9. Package artifacts ──────────────────────────────────────────────────
+      - name: Package iOS build
+        run: |
+          VERSION="${{ inputs.version }}"
+          cd scouting/android/build/ios
+
+          # Signed build produces an .ipa directly; unsigned produces an archive
+          if [ "${{ inputs.codesign }}" = "true" ]; then
+            cp iphoneos/Scout\ Ops.ipa \
+               "../../../../scout_ops_ios_${VERSION}.ipa" 2>/dev/null || \
+            cp iphoneos/*.ipa \
+               "../../../../scout_ops_ios_${VERSION}.ipa"
+          else
+            # Pack the unsigned archive as a tarball for sideloading / CI testing
+            tar -czf "../../../../scout_ops_ios_${VERSION}_unsigned.tar.gz" archive
+          fi
+
+      # ── 10. Upload build artifacts ────────────────────────────────────────────
+      - name: Upload IPA artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: scout-ops-ios-${{ inputs.version }}
+          path: |
+            scout_ops_ios_${{ inputs.version }}.ipa
+            scout_ops_ios_${{ inputs.version }}_unsigned.tar.gz
+          if-no-files-found: ignore
+          retention-days: 30
+
+      # ── 11. GitHub Release ────────────────────────────────────────────────────
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          VERSION="${{ inputs.version }}"
+          SIGNED="${{ inputs.codesign }}"
+          NOTES="${{ inputs.release_notes }}"
+
+          if [ "$SIGNED" = "true" ]; then
+            ARTIFACT="scout_ops_ios_${VERSION}.ipa"
+            ARTIFACT_DESC="- \`${ARTIFACT}\` — Signed IPA, ready to distribute via TestFlight or direct install"
+            SIGN_NOTE="✅ **Signed** — distribute via TestFlight or AltStore"
+          else
+            ARTIFACT="scout_ops_ios_${VERSION}_unsigned.tar.gz"
+            ARTIFACT_DESC="- \`${ARTIFACT}\` — Unsigned archive (sideload via AltStore / Xcode, or sign locally)"
+            SIGN_NOTE="⚠️ **Unsigned** — requires local signing before device install"
+          fi
+
+          cat > release_notes.md <<EOF
+          ## 🍎 Scout Ops iOS — v${VERSION}
+
+          ${SIGN_NOTE}
+
+          ${NOTES}
+
+          ### Artifacts
+          ${ARTIFACT_DESC}
+
+          ### Installing on Device
+          $([ "$SIGNED" = "true" ] && echo "Upload the IPA to TestFlight via Transporter, or install directly with Apple Configurator 2." || echo "Open the .tar.gz, then drag the .xcarchive into Xcode Organizer to sign and export, or use AltStore to sideload.")
+
+          **Built from:** \`${{ github.sha }}\`
+          **Run:** [#${{ github.run_number }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+          EOF
+
+          gh release create "ios-v${VERSION}" \
+            "$ARTIFACT" \
+            --title "Scout Ops iOS v${VERSION}" \
+            --notes-file release_notes.md \
+            --prerelease=$([ "$SIGNED" = "false" ] && echo "true" || echo "false")

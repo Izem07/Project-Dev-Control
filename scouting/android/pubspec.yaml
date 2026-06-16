@@ -1,13 +1,13 @@
-name: scout_ops_android
-description: Scout Ops Android - Midland District Edition
+name: scout_ops
+description: Scout Ops — Cross-platform scouting app for FRC Team 201 The FEDS
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
 publish_to: none # Remove this line if you wish to publish to pub.dev
 
 msix_config:
-  display_name: Scout Ops Android
+  display_name: Scout Ops
   publisher_display_name: FEDS201
-  identity_name: feds.suite.scoutopsandroid
+  identity_name: feds.suite.scoutops
   msix_version: 3.0.0.0
   logo_path: ../logo.ico
   capabilities: internetClient,location,microphone,webcam
@@ -90,7 +90,7 @@ dev_dependencies:
 
 flutter_launcher_icons:
   android: "launcher_icon"
-  ios: false
+  ios: true
   image_path: "assets/logo.png"
   min_sdk_android: 21 # android min sdk min:16, default 21
   web:
