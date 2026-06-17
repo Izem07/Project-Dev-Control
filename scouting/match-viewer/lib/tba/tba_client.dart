@@ -10,17 +10,17 @@ class TbaClient {
   /// The API key this client was created with, or null if none was provided.
   final String? apiKey;
 
-  TbaClient({String? apiKey, Dio? dio})
-      : apiKey = apiKey,
-        _dio = dio ??
-            Dio(BaseOptions(
+  TbaClient({this.apiKey, Dio? dio})
+    : _dio =
+          dio ??
+          Dio(
+            BaseOptions(
               baseUrl: _baseUrl,
-              headers: {
-                if (apiKey != null) 'X-TBA-Auth-Key': apiKey,
-              },
+              headers: {if (apiKey != null) 'X-TBA-Auth-Key': apiKey},
               connectTimeout: const Duration(seconds: 10),
               receiveTimeout: const Duration(seconds: 10),
-            ));
+            ),
+          );
 
   /// Whether this client has an API key configured.
   bool get hasApiKey => apiKey != null && apiKey!.isNotEmpty;
@@ -40,8 +40,7 @@ class TbaClient {
 
   Future<Result<Event>> getEvent(String eventKey) async {
     try {
-      final response =
-          await _dio.get<Map<String, dynamic>>('/event/$eventKey');
+      final response = await _dio.get<Map<String, dynamic>>('/event/$eventKey');
       final map = response.data!;
       return Ok(_parseEvent(map));
     } catch (e) {
@@ -51,8 +50,7 @@ class TbaClient {
 
   Future<Result<List<Team>>> getTeams(String eventKey) async {
     try {
-      final response =
-          await _dio.get<List<dynamic>>('/event/$eventKey/teams');
+      final response = await _dio.get<List<dynamic>>('/event/$eventKey/teams');
       final teams = (response.data ?? []).map((json) {
         final map = json as Map<String, dynamic>;
         return Team(
@@ -69,8 +67,9 @@ class TbaClient {
 
   Future<Result<List<Match>>> getMatches(String eventKey) async {
     try {
-      final response =
-          await _dio.get<List<dynamic>>('/event/$eventKey/matches');
+      final response = await _dio.get<List<dynamic>>(
+        '/event/$eventKey/matches',
+      );
       final matches = (response.data ?? []).map((json) {
         final map = json as Map<String, dynamic>;
         return _parseMatch(map);
@@ -83,8 +82,7 @@ class TbaClient {
 
   Future<Result<List<Alliance>?>> getAlliances(String eventKey) async {
     try {
-      final response =
-          await _dio.get<dynamic>('/event/$eventKey/alliances');
+      final response = await _dio.get<dynamic>('/event/$eventKey/alliances');
       final data = response.data;
       if (data == null || (data is List && data.isEmpty)) {
         return const Ok(null);
@@ -95,16 +93,19 @@ class TbaClient {
         final map = list[i] as Map<String, dynamic>;
         final name = map['name'] as String? ?? 'Alliance ${i + 1}';
         final allianceNumber = _parseAllianceNumber(name, i + 1);
-        final picks = (map['picks'] as List<dynamic>?)
+        final picks =
+            (map['picks'] as List<dynamic>?)
                 ?.map((e) => e as String)
                 .toList() ??
             [];
-        alliances.add(Alliance(
-          eventKey: eventKey,
-          allianceNumber: allianceNumber,
-          name: name,
-          picks: picks,
-        ));
+        alliances.add(
+          Alliance(
+            eventKey: eventKey,
+            allianceNumber: allianceNumber,
+            name: name,
+            picks: picks,
+          ),
+        );
       }
       return Ok(alliances);
     } catch (e) {
@@ -131,11 +132,13 @@ class TbaClient {
     final red = alliances['red'] as Map<String, dynamic>? ?? {};
     final blue = alliances['blue'] as Map<String, dynamic>? ?? {};
 
-    final redTeamKeys = (red['team_keys'] as List<dynamic>?)
+    final redTeamKeys =
+        (red['team_keys'] as List<dynamic>?)
             ?.map((e) => e as String)
             .toList() ??
         [];
-    final blueTeamKeys = (blue['team_keys'] as List<dynamic>?)
+    final blueTeamKeys =
+        (blue['team_keys'] as List<dynamic>?)
             ?.map((e) => e as String)
             .toList() ??
         [];

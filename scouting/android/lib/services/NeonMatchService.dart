@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'dart:async';
 import 'package:postgres/postgres.dart';
 import 'package:scout_ops_android/services/DataBase.dart';
@@ -19,11 +18,9 @@ class NeonMatchService {
     final uri = Uri.parse(connectionString);
     final endpoint = Endpoint(
       host: uri.host,
-      database:
-      uri.pathSegments.isNotEmpty ? uri.pathSegments.first : 'neondb',
+      database: uri.pathSegments.isNotEmpty ? uri.pathSegments.first : 'neondb',
       username: uri.userInfo.split(':').first,
-      password:
-      uri.userInfo.contains(':') ? uri.userInfo.split(':').last : '',
+      password: uri.userInfo.contains(':') ? uri.userInfo.split(':').last : '',
       port: uri.hasPort ? uri.port : 5432,
     );
 
@@ -166,44 +163,44 @@ class NeonMatchService {
 
       await stmt.run([
         // Match info
-        teamNumber,                                           // $1
-        matchKey,                                             // $2
-        data['matchNumber'] ?? 0,                             // $3
-        data['scouterName']?.toString() ?? '',                // $4
-        data['allianceColor']?.toString() ?? '',              // $5
-        data['eventKey']?.toString() ?? '',                   // $6
-        data['station'] ?? 0,                                 // $7
-        data['batteryPercentage'] ?? 0,                       // $8
+        teamNumber, // $1
+        matchKey, // $2
+        data['matchNumber'] ?? 0, // $3
+        data['scouterName']?.toString() ?? '', // $4
+        data['allianceColor']?.toString() ?? '', // $5
+        data['eventKey']?.toString() ?? '', // $6
+        data['station'] ?? 0, // $7
+        data['batteryPercentage'] ?? 0, // $8
 
         // Auton fields
-        (auton['TotalShootingTime'] ?? 0).toDouble(),         // $9
-        auton['AmountOfShooting'] ?? 0,                       // $10
-        auton['Climb'] ?? false,                              // $11
-        auton['passing'] ?? 0,                                // $12
+        (auton['TotalShootingTime'] ?? 0).toDouble(), // $9
+        auton['AmountOfShooting'] ?? 0, // $10
+        auton['Climb'] ?? false, // $11
+        auton['passing'] ?? 0, // $12
 
         // TeleOp fields
-        (teleOp['TotalShootingTime1'] ?? 0).toDouble(),       // $13
-        teleOp['TotalAmount1'] ?? 0,                          // $14
-        teleOp['Defense'] ?? false,                            // $15
-        teleOp['NeutralTrips'] ?? 0,                          // $16
-        teleOp['PushBalls'] ?? 0,                             // $17
-        teleOp['passing'] ?? 0,                               // $18
+        (teleOp['TotalShootingTime1'] ?? 0).toDouble(), // $13
+        teleOp['TotalAmount1'] ?? 0, // $14
+        teleOp['Defense'] ?? false, // $15
+        teleOp['NeutralTrips'] ?? 0, // $16
+        teleOp['PushBalls'] ?? 0, // $17
+        teleOp['passing'] ?? 0, // $18
 
         // Endgame fields
-        end['ClimbStatus'] ?? 0,                              // $19
-        end['Park'] ?? false,                                 // $20
-        end['PushBallsEnd'] ?? 0,                                 // $21
-        end['Passing'] ?? 0,                                  // $22
-        end['robotBroken'] ?? false,                          // $23
-        end['EndNeutralTrips'] ?? 0,                          // $24
-        end['ShootingAccuracy'] ?? 3,                         // $25
-        (end['endgameTime'] ?? 0.0).toDouble(),               // $26
-        end['endgameshootingCycles'] ?? 0,                    // $27
-        end['Comments']?.toString() ?? '',                    // $28
+        end['ClimbStatus'] ?? 0, // $19
+        end['Park'] ?? false, // $20
+        end['PushBallsEnd'] ?? 0, // $21
+        end['Passing'] ?? 0, // $22
+        end['robotBroken'] ?? false, // $23
+        end['EndNeutralTrips'] ?? 0, // $24
+        end['ShootingAccuracy'] ?? 3, // $25
+        (end['endgameTime'] ?? 0.0).toDouble(), // $26
+        end['endgameshootingCycles'] ?? 0, // $27
+        end['Comments']?.toString() ?? '', // $28
 
         // Metadata
-        payload['id'].toString(),                             // $29
-        DateTime.parse(payload['created_at'].toString()),     // $30
+        payload['id'].toString(), // $29
+        DateTime.parse(payload['created_at'].toString()), // $30
       ]).timeout(const Duration(seconds: 10));
 
       print('NeonMatchService: Successfully inserted ${payload['id']}');

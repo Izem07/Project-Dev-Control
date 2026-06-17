@@ -26,6 +26,7 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
   mocktail: any
+  fake_async: any
   flutter_lints: any
 
 flutter:

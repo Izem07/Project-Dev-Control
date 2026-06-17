@@ -31,6 +31,7 @@ class AutonState extends State<Auton> {
   late int matchNumber;
   late int passing;
   late Alliance mapcolor;
+  // ignore: unused_field
   final GlobalKey<SinglePointSelectorState> _tapSelectorKey = GlobalKey();
 
   @override
@@ -53,12 +54,7 @@ class AutonState extends State<Auton> {
     shootingTime = widget.matchRecord.autonPoints.total_shooting_time;
     amount = widget.matchRecord.autonPoints.amountOfShooting;
     passing = widget.matchRecord.autonPoints.passing;
-    autonPoints = AutonPoints(
-        shootingTime,
-        amount,
-        autoClimb,
-
-        passing);
+    autonPoints = AutonPoints(shootingTime, amount, autoClimb, passing);
   }
 
   void UpdateData() {

@@ -35,7 +35,8 @@ class SettingsPageState extends State<SettingsPage> {
   TextEditingController eventKeyController = TextEditingController();
   TextEditingController neonRestController = TextEditingController();
   TextEditingController apiKeyController = TextEditingController();
-  String ApiKey = Hive.box('settings').get('ApiKey', defaultValue: Settings.defaultApiKey);
+  String ApiKey =
+      Hive.box('settings').get('ApiKey', defaultValue: Settings.defaultApiKey);
 
   String? serverIp;
 
@@ -59,8 +60,8 @@ class SettingsPageState extends State<SettingsPage> {
   @override
   void initState() {
     super.initState();
-    apiKeyController.text =
-        Hive.box('settings').get('ApiKey', defaultValue: Settings.defaultApiKey);
+    apiKeyController.text = Hive.box('settings')
+        .get('ApiKey', defaultValue: Settings.defaultApiKey);
     neonRestController.text =
         Hive.box('settings').get('neonRestUrl', defaultValue: '');
     fetchServerIp();
@@ -74,6 +75,7 @@ class SettingsPageState extends State<SettingsPage> {
     super.dispose();
   }
 
+  // ignore: unused_element
   Future<void> _checkInitialPermissions() async {
     var locationStatus = await Permission.location.status;
     var bluetoothStatus = await Permission.bluetooth.status;
@@ -253,8 +255,7 @@ class SettingsPageState extends State<SettingsPage> {
                 );
               }
             },
-            child: Text('ARCHIVE',
-                style: TextStyle(color: Colors.orange[700])),
+            child: Text('ARCHIVE', style: TextStyle(color: Colors.orange[700])),
           ),
         ],
       ),
@@ -800,7 +801,8 @@ class SettingsPageState extends State<SettingsPage> {
                                         Hive.box('settings').clear();
                                         Hive.box('pitData').clear();
 
-                                        developer.log('All data cleared by user',
+                                        developer.log(
+                                            'All data cleared by user',
                                             name: 'Data Cleared');
                                       });
                                     },
