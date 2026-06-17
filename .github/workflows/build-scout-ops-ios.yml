@@ -22,28 +22,24 @@ on:
 jobs:
   build-ios:
     name: Build & Release All iOS IPAs
-    runs-on: macos-latest          # Xcode required — must be macOS
+    runs-on: macos-latest
     permissions:
       contents: write
 
     steps:
-      # ── 1. Checkout ──────────────────────────────────────────────────────────
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # ── 2. Flutter ───────────────────────────────────────────────────────────
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
           channel: stable
 
-      # ── 3. Xcode ─────────────────────────────────────────────────────────────
       - name: Select latest stable Xcode
         uses: maxim-lobanov/setup-xcode@v1
         with:
           xcode-version: latest-stable
 
-      # ── 4. Bump version in all pubspecs ───────────────────────────────────────
       - name: Bump versions
         run: |
           V="${{ inputs.version }}+${{ github.run_number }}"
@@ -52,7 +48,6 @@ jobs:
           sed -i '' "s/^version: .*/version: $V/" scouting/dash/pubspec.yaml
           sed -i '' "s/^version: .*/version: $V/" scouting/match-viewer/pubspec.yaml
 
-      # ── 5. Apple code signing (signed builds only) ────────────────────────────
       - name: Import Apple Distribution Certificate
         if: inputs.codesign == 'true'
         env:
@@ -84,79 +79,49 @@ jobs:
           echo "$PP_DASH"    | base64 --decode > ~/Library/MobileDevice/Provisioning\ Profiles/scout_ops_dash.mobileprovision
           echo "$PP_VIEWER"  | base64 --decode > ~/Library/MobileDevice/Provisioning\ Profiles/scout_ops_viewer.mobileprovision
 
-      # ── 6. Build: Scout Ops Android (main scouting app) ───────────────────────
-      - name: Dependencies — Scout Ops Android
-        working-directory: scouting/android
-        run: flutter pub get
-
-      - name: CocoaPods — Scout Ops Android
-        working-directory: scouting/android/ios
-        run: pod install --repo-update
+      # flutter pub get on macOS generates the Podfile and runs pod install automatically.
+      # flutter build ipa then handles the full CocoaPods + Xcode build chain.
 
       - name: Build IPA — Scout Ops Android
         working-directory: scouting/android
         run: |
+          flutter pub get
           if [ "${{ inputs.codesign }}" = "true" ]; then
             flutter build ipa --no-tree-shake-icons
           else
             flutter build ipa --no-codesign --no-tree-shake-icons
           fi
-
-      # ── 7. Build: Scout Ops Scan ──────────────────────────────────────────────
-      - name: Dependencies — Scout Ops Scan
-        working-directory: scouting/scan
-        run: flutter pub get
-
-      - name: CocoaPods — Scout Ops Scan
-        working-directory: scouting/scan/ios
-        run: pod install --repo-update
 
       - name: Build IPA — Scout Ops Scan
         working-directory: scouting/scan
         run: |
+          flutter pub get
           if [ "${{ inputs.codesign }}" = "true" ]; then
             flutter build ipa --no-tree-shake-icons
           else
             flutter build ipa --no-codesign --no-tree-shake-icons
           fi
-
-      # ── 8. Build: Scout Ops Dash ──────────────────────────────────────────────
-      - name: Dependencies — Scout Ops Dash
-        working-directory: scouting/dash
-        run: flutter pub get
-
-      - name: CocoaPods — Scout Ops Dash
-        working-directory: scouting/dash/ios
-        run: pod install --repo-update
 
       - name: Build IPA — Scout Ops Dash
         working-directory: scouting/dash
         run: |
+          flutter pub get
           if [ "${{ inputs.codesign }}" = "true" ]; then
             flutter build ipa --no-tree-shake-icons
           else
             flutter build ipa --no-codesign --no-tree-shake-icons
           fi
-
-      # ── 9. Build: Scout Ops Match Viewer ──────────────────────────────────────
-      - name: Dependencies — Match Viewer
-        working-directory: scouting/match-viewer
-        run: flutter pub get
-
-      - name: CocoaPods — Match Viewer
-        working-directory: scouting/match-viewer/ios
-        run: pod install --repo-update
 
       - name: Build IPA — Match Viewer
         working-directory: scouting/match-viewer
         run: |
+          flutter pub get
           if [ "${{ inputs.codesign }}" = "true" ]; then
             flutter build ipa --no-tree-shake-icons
           else
             flutter build ipa --no-codesign --no-tree-shake-icons
           fi
 
-      # ── 10. Collect & package all builds ──────────────────────────────────────
       - name: Collect artifacts
         run: |
           V="${{ inputs.version }}"
@@ -168,15 +133,15 @@ jobs:
             local out=$3
 
             if [ "$SIGNED" = "true" ]; then
-              # Signed: grab the .ipa from the iphoneos output
               IPA=$(find "${dir}/build/ios/iphoneos" -name "*.ipa" 2>/dev/null | head -1)
               [ -n "$IPA" ] && cp "$IPA" "${out}" || echo "⚠️  No signed IPA found for ${name}"
             else
-              # Unsigned: tar the xcarchive
-              ARCHIVE=$(find "${dir}/build/ios" -name "*.xcarchive" -o -name "archive" -type d 2>/dev/null | head -1)
-              [ -n "$ARCHIVE" ] && tar -czf "${out}" "$ARCHIVE" || \
-              tar -czf "${out}" "${dir}/build/ios/archive" 2>/dev/null || \
-              echo "⚠️  No archive found for ${name}"
+              ARCHIVE=$(find "${dir}/build/ios" -name "*.xcarchive" -type d 2>/dev/null | head -1)
+              if [ -n "$ARCHIVE" ]; then
+                tar -czf "${out}" "$ARCHIVE"
+              else
+                echo "⚠️  No archive found for ${name}"
+              fi
             fi
           }
 
@@ -192,7 +157,6 @@ jobs:
             collect_app "match-viewer" "scouting/match-viewer" "scout_ops_match_viewer_${V}_unsigned.tar.gz"
           fi
 
-      # ── 11. Upload artifacts ──────────────────────────────────────────────────
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -209,7 +173,6 @@ jobs:
           if-no-files-found: ignore
           retention-days: 30
 
-      # ── 12. GitHub Release ────────────────────────────────────────────────────
       - name: Create GitHub Release
         env:
           GH_TOKEN: ${{ github.token }}
@@ -225,7 +188,7 @@ jobs:
           else
             EXT="tar.gz"
             SIGN_NOTE="⚠️ **Unsigned** — requires local signing before device install"
-            INSTALL_NOTE="Extract the .tar.gz and open the .xcarchive in Xcode Organizer to sign and export, or use AltStore to sideload."
+            INSTALL_NOTE="Extract the .tar.gz, open the .xcarchive in Xcode Organizer to sign and export, or use AltStore to sideload."
           fi
 
           FILES=$(ls scout_ops_*_${V}*.${EXT} scout_ops_*_${V}*_unsigned.${EXT} 2>/dev/null | tr '\n' ' ')
