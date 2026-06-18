@@ -134,13 +134,21 @@ jobs:
 
             if [ "$SIGNED" = "true" ]; then
               IPA=$(find "${dir}/build/ios/iphoneos" -name "*.ipa" 2>/dev/null | head -1)
-              [ -n "$IPA" ] && cp "$IPA" "${out}" || echo "⚠️  No signed IPA found for ${name}"
+              if [ -n "$IPA" ]; then
+                cp "$IPA" "${out}"
+                echo "✅ ${name}: ${out}"
+              else
+                echo "❌ No signed IPA found for ${name} — build may have failed"
+                exit 1
+              fi
             else
               ARCHIVE=$(find "${dir}/build/ios" -name "*.xcarchive" -type d 2>/dev/null | head -1)
               if [ -n "$ARCHIVE" ]; then
                 tar -czf "${out}" "$ARCHIVE"
+                echo "✅ ${name}: ${out}"
               else
-                echo "⚠️  No archive found for ${name}"
+                echo "❌ No xcarchive found for ${name} — build may have failed"
+                exit 1
               fi
             fi
           }
@@ -157,6 +165,9 @@ jobs:
             collect_app "match-viewer" "scouting/match-viewer" "scout_ops_match_viewer_${V}_unsigned.tar.gz"
           fi
 
+          echo "All artifacts collected."
+          ls -lh scout_ops_*
+
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -170,7 +181,7 @@ jobs:
             scout_ops_scan_${{ inputs.version }}*_unsigned.tar.gz
             scout_ops_dash_${{ inputs.version }}*_unsigned.tar.gz
             scout_ops_match_viewer_${{ inputs.version }}*_unsigned.tar.gz
-          if-no-files-found: ignore
+          if-no-files-found: error
           retention-days: 30
 
       - name: Create GitHub Release
@@ -190,8 +201,6 @@ jobs:
             SIGN_NOTE="⚠️ **Unsigned** — requires local signing before device install"
             INSTALL_NOTE="Extract the .tar.gz, open the .xcarchive in Xcode Organizer to sign and export, or use AltStore to sideload."
           fi
-
-          FILES=$(ls scout_ops_*_${V}*.${EXT} scout_ops_*_${V}*_unsigned.${EXT} 2>/dev/null | tr '\n' ' ')
 
           cat > release_notes.md <<EOF
           ## 🍎 Scout Ops Suite — iOS v${V}
@@ -215,8 +224,16 @@ jobs:
           **Run:** [#${{ github.run_number }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
           EOF
 
+          # Create the release first with no files
           gh release create "ios-v${V}" \
-            $FILES \
             --title "Scout Ops Suite — iOS v${V}" \
             --notes-file release_notes.md \
             --prerelease=$([ "$SIGNED" = "false" ] && echo "true" || echo "false")
+
+          # Upload each file individually so one failure doesn't block the others
+          for f in scout_ops_*_${V}*.${EXT} scout_ops_*_${V}*_unsigned.tar.gz; do
+            if [ -f "$f" ]; then
+              echo "Uploading $f..."
+              gh release upload "ios-v${V}" "$f" --clobber
+            fi
+          done
