@@ -86,7 +86,7 @@ jobs:
             ARCHIVE_PATH=$(find build/ios/archive -name "*.xcarchive" | head -1)
             if [ -n "$ARCHIVE_PATH" ]; then
               # Create export options for unsigned/ad-hoc build
-              cat > ExportOptions.plist <<EOF
+              cat > ExportOptions.plist <<'EOF'
               <?xml version="1.0" encoding="UTF-8"?>
               <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
               <plist version="1.0">
