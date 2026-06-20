@@ -78,6 +78,16 @@ dependencies:
   path_provider: ^2.1.5
   csv: ^8.0.0
 
+  # Match Viewer Dependencies
+  media_kit: ^1.1.11
+  media_kit_video: ^1.2.5
+  media_kit_libs_video: ^1.0.5
+  media_kit_native_event_loop: ^1.0.9
+  uuid: any
+  dio: any
+  wakelock_plus: ^1.2.8
+  logger: any
+
 
 
 dev_dependencies:

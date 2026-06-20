@@ -8,17 +8,17 @@ Built **by FRC students, for FRC teams**, Scout-Ops Suite prioritizes reliabilit
 
 ## 🚀 Features
 
-- 📦 **Centralized App Storage**  
-  Stores and manages all Scout-Ops scouting applications in one place.
+- 📦 **One Download, Multiple Tools**  
+  Single mobile app with built-in modules for match scouting, pit scouting, and QR scanning—no App Store chaos at competitions.
 
 - 📊 **Unified Scouting Data**  
-  Aggregates data from multiple Scout-Ops apps into a single system.
+  Aggregates data from all scouting modules into a single, coherent system.
 
 - ⚡ **Competition-Ready Performance**  
   Designed to work reliably with limited or no internet access.
 
-- 🔄 **Seamless App Integration**  
-  Supports current and future Scout-Ops scouting tools.
+- 🔄 **Seamless Module Integration**  
+  Flip between match scouting, pit scouting, and QR scanning with a single tap.
 
 - 🧠 **Data-Driven Insights**  
   Enables faster analysis and smarter strategic decisions.
@@ -38,18 +38,64 @@ By acting as a **central hub**, Scout-Ops Suite ensures:
 
 ---
 
-## 🧩 Supported Apps
+## 🧩 Architecture Overview
 
-Scout-Ops Suite is designed to store and support:
-- **Scout Ops Android**: The primary mobile scouting application.
-- **Scout Ops Scan**: A specialized QR code scanning and data entry tool.
-- **Scout Ops Desktop**: The Windows-based desktop client for data management and analysis.
-- **Scout Ops Server**: The backend server that handles data aggregation and API requests.
-- **Scout-Ops ToolChain**: A collection of tools for processing and strategizing with scouting data.
+```
+[ SCOUT-OPS SUITE ]
+       │
+       ├───► [ Dev Control Hub ] ◄─── CENTRAL ORCHESTRATOR
+       │         │
+       │         ├── Controls & monitors all sub-apps
+       │         ├── Live log streaming from all services
+       │         ├── One-click Android/iOS builds
+       │         └── Embedded web apps (server, dash, viewer, scan)
+       │
+       ├───► [ Mobile App (iOS / Android) ] ◄─── (ONE SINGLE DOWNLOAD)
+       │         │
+       │         ├── Module: Match Scouting
+       │         ├── Module: Pit Scouting  
+       │         └── Module: QR Code Scanner
+       │
+       └───► [ Backend Services ]
+                 │
+                 ├── Scout-Ops Server (Data Aggregator)
+                 ├── Scout Analytics Dashboard
+                 ├── Match Viewer
+                 └── Scout Lookup
+```
+
+## 🎛️ Dev Control Hub (Central Orchestrator)
+
+**The command center for the entire Scout-Ops Suite.** Dev Control is an Electron-based desktop application that serves as the central hub, allowing admins to launch, monitor, and manage all ScoutOps sub-applications from a single interface—without touching the terminal.
+
+**Key Capabilities:**
+- **App Control Panel** — Start, stop, and monitor all ScoutOps sub-apps with one click
+- **Live Dev Logs** — Real-time stdout/stderr streaming from every running process
+- **Merged Workspace** — Embed running web apps directly inside the control panel
+- **Server Health** — Monitor connected scouting devices, sync status, and data records
+- **One-Click Builds** — Android APK and iOS IPA compilation for mobile devices
+- **Settings Management** — Customize ports, launch commands, and working directories for all sub-apps
+
+## 📱 The Scout-Ops Mobile App (iOS & Android)
+
+**One download. Zero friction.** Your scouts download the single Scout-Ops app, and they immediately have the scanner, the match tracker, and the pit scouter right in their pocket.
+
+Instead of juggling multiple applications or dealing with App Store chaos at competition, this single download contains built-in modules for:
+
+- **Match Scouting Module**: The primary interface for recording match performance data in real-time
+- **Pit Scouting Module**: Integrated pit scouting tools for collecting team information and robot specifications
+- **QR Code Scanner Module**: Built-in QR scanning to instantly ingest data without switching apps
+
+## �️ Backend Services
+
+- **Scout-Ops Server**: The backend aggregator that syncs everything together and handles API requests
+- **Scout Analytics Dashboard**: Web-based analytics for data visualization and strategy planning
+- **Match Viewer**: Web-based match footage viewer for reviewing recorded matches
+- **Scout Lookup**: Team and event lookup services
 
 ---
 
-## 🏗️ Architecture Overview
+## 🏗️ Technical Architecture
 
 - Modular and extensible design
 - App-agnostic data handling
