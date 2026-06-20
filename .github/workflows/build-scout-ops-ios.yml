@@ -88,24 +88,18 @@ jobs:
           V="${{ inputs.version }}"
           SIGNED="${{ inputs.codesign }}"
 
-          if [ "$SIGNED" = "true" ]; then
-            IPA=$(find "scouting/android/build/ios/iphoneos" -name "*.ipa" 2>/dev/null | head -1)
-            if [ -n "$IPA" ]; then
+          IPA=$(find "scouting/android/build/ios/iphoneos" -name "*.ipa" 2>/dev/null | head -1)
+          if [ -n "$IPA" ]; then
+            if [ "$SIGNED" = "true" ]; then
               cp "$IPA" "scout_ops_mobile_${V}.ipa"
-              echo "✅ Scout-Ops Mobile: scout_ops_mobile_${V}.ipa"
+              echo "✅ Scout-Ops Mobile: scout_ops_mobile_${V}.ipa (signed)"
             else
-              echo "❌ No signed IPA found — build may have failed"
-              exit 1
+              cp "$IPA" "scout_ops_mobile_${V}_unsigned.ipa"
+              echo "✅ Scout-Ops Mobile: scout_ops_mobile_${V}_unsigned.ipa (unsigned)"
             fi
           else
-            ARCHIVE=$(find "scouting/android/build/ios" -name "*.xcarchive" -type d 2>/dev/null | head -1)
-            if [ -n "$ARCHIVE" ]; then
-              tar -czf "scout_ops_mobile_${V}_unsigned.tar.gz" "$ARCHIVE"
-              echo "✅ Scout-Ops Mobile: scout_ops_mobile_${V}_unsigned.tar.gz"
-            else
-              echo "❌ No xcarchive found — build may have failed"
-              exit 1
-            fi
+            echo "❌ No IPA found — build may have failed"
+            exit 1
           fi
 
           echo "Artifact collected."
@@ -117,7 +111,6 @@ jobs:
           name: scout-ops-mobile-ios-${{ inputs.version }}
           path: |
             scout_ops_mobile_${{ inputs.version }}*.ipa
-            scout_ops_mobile_${{ inputs.version }}*_unsigned.tar.gz
           if-no-files-found: error
           retention-days: 30
 
@@ -130,15 +123,13 @@ jobs:
           NOTES="${{ inputs.release_notes }}"
 
           if [ "$SIGNED" = "true" ]; then
-            EXT="ipa"
             SIGN_NOTE="✅ **Signed** — distribute via TestFlight or AltStore"
             INSTALL_NOTE="Upload to TestFlight via Transporter, or install directly with Apple Configurator 2."
             FILE="scout_ops_mobile_${V}.ipa"
           else
-            EXT="tar.gz"
             SIGN_NOTE="⚠️ **Unsigned** — requires local signing before device install"
-            INSTALL_NOTE="Extract the .tar.gz, open the .xcarchive in Xcode Organizer to sign and export, or use AltStore to sideload."
-            FILE="scout_ops_mobile_${V}_unsigned.tar.gz"
+            INSTALL_NOTE="Use AltStore to sideload, or open in Xcode Organizer to sign and export."
+            FILE="scout_ops_mobile_${V}_unsigned.ipa"
           fi
 
           cat > release_notes.md <<EOF
@@ -158,7 +149,7 @@ jobs:
           ### File
           | File | Description |
           |-----|-------------|
-          | \`scout_ops_mobile_${V}.${EXT}\` | Scout-Ops Mobile App for iOS |
+          | \`${FILE}\` | Scout-Ops Mobile App for iOS |
 
           ### Installing on Device
           ${INSTALL_NOTE}
