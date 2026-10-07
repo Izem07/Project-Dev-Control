@@ -45,10 +45,16 @@ jobs:
           channel: stable
 
       # ── 4. Bump version ───────────────────────────────────────────────────────
-      - name: Bump version
+      - name: Validate and bump version
         run: |
-          V="${{ inputs.version }}+${{ github.run_number }}"
-          sed -i "s/^version: .*/version: $V/" scouting/android/pubspec.yaml
+          V="${{ inputs.version }}"
+          # Ensure version is plain semver: digits and dots only (e.g. 1.3.0)
+          if ! echo "$V" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+$'; then
+            echo "❌ Invalid version '$V' — must be semver format like 1.3.0 (numbers and dots only, no letters or prefixes)"
+            exit 1
+          fi
+          sed -i "s/^version: .*/version: ${V}+${{ github.run_number }}/" scouting/android/pubspec.yaml
+          echo "✅ Version set to ${V}+${{ github.run_number }}"
 
       # ── 5. Keystore setup (release only) ──────────────────────────────────────
       - name: Decode keystore
