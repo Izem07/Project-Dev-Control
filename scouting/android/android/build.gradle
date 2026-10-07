@@ -1,18 +1,2 @@
-allprojects {
-    repositories {
-        google()
-        mavenCentral()
-    }
-}
-
-rootProject.buildDir = "../build"
-subprojects {
-    project.buildDir = "${rootProject.buildDir}/${project.name}"
-}
-subprojects {
-    project.evaluationDependsOn(":app")
-}
-
-tasks.register("clean", Delete) {
-    delete rootProject.buildDir
-}
+// Top-level build file — repository and plugin config now live in settings.gradle.
+// Keep this file minimal; AGP 8.7+ deprecates allprojects/subprojects patterns here.
