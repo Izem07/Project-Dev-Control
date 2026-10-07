@@ -36,13 +36,9 @@ android {
         versionName = flutter.versionName
     }
 
-    // signingConfigs must come before buildTypes in AGP 9
     signingConfigs {
-        debug {
-            // default debug keystore — no config needed
-        }
-        if (hasKeystore) {
-            release {
+        release {
+            if (hasKeystore) {
                 keyAlias = keystoreProperties["keyAlias"]
                 keyPassword = keystoreProperties["keyPassword"]
                 storeFile = file(keystoreProperties["storeFile"])
@@ -52,9 +48,6 @@ android {
     }
 
     buildTypes {
-        debug {
-            signingConfig = signingConfigs.debug
-        }
         release {
             signingConfig = hasKeystore ? signingConfigs.release : signingConfigs.debug
             minifyEnabled = false
