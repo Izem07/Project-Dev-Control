@@ -1,7 +1,6 @@
 plugins {
     id "com.android.application"
     id "kotlin-android"
-    // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id "dev.flutter.flutter-gradle-plugin"
     id "com.google.gms.google-services"
     id "com.google.firebase.appdistribution"
@@ -26,7 +25,7 @@ android {
     }
 
     kotlinOptions {
-        jvmTarget = JavaVersion.VERSION_1_8
+        jvmTarget = "1.8"
     }
 
     defaultConfig {
@@ -37,7 +36,11 @@ android {
         versionName = flutter.versionName
     }
 
+    // signingConfigs must come before buildTypes in AGP 9
     signingConfigs {
+        debug {
+            // default debug keystore — no config needed
+        }
         if (hasKeystore) {
             release {
                 keyAlias = keystoreProperties["keyAlias"]
@@ -49,8 +52,13 @@ android {
     }
 
     buildTypes {
+        debug {
+            signingConfig = signingConfigs.debug
+        }
         release {
             signingConfig = hasKeystore ? signingConfigs.release : signingConfigs.debug
+            minifyEnabled = false
+            shrinkResources = false
 
             firebaseAppDistribution {
                 artifactType = "APK"
