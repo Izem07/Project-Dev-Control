@@ -1,0 +1,102 @@
+name: Build Scout-Ops Admin Menu (Web)
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version number (e.g. 1.3.0)"
+        required: true
+      release_notes:
+        description: "What's new in this release"
+        required: false
+        default: "Bug fixes and performance improvements."
+
+jobs:
+  build-web:
+    name: Build Scout-Ops Admin Menu (Flutter Web)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+
+      - name: Bump version
+        run: |
+          V="${{ inputs.version }}+${{ github.run_number }}"
+          sed -i "s/^version: .*/version: $V/" scouting/dev-control/pubspec.yaml
+
+      - name: Build Flutter Web
+        working-directory: scouting/dev-control
+        run: |
+          flutter pub get
+          flutter build web --release --no-tree-shake-icons --base-href "/"
+
+      - name: Package web build
+        run: |
+          V="${{ inputs.version }}"
+          cd scouting/dev-control/build/web
+          zip -r -9 "../../../../scout_ops_admin_web_${V}.zip" .
+          cd ../../../..
+          echo "✅ Packaged: scout_ops_admin_web_${V}.zip"
+          ls -lh scout_ops_admin_web_*.zip
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: scout-ops-admin-web-${{ inputs.version }}
+          path: scout_ops_admin_web_${{ inputs.version }}.zip
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          V="${{ inputs.version }}"
+          NOTES="${{ inputs.release_notes }}"
+          FILE="scout_ops_admin_web_${V}.zip"
+
+          cat > release_notes.md << EOF
+          ## 🌐 Scout-Ops Admin Menu v${V} (Web)
+
+          **Deploy anywhere — no install required.**
+
+          ${NOTES}
+
+          ### What works in Web Mode
+          - ✅ Server Health — live status, devices, data, match upload
+          - ✅ Server Sync — connect to any Scout Ops Server by IP
+          - ✅ Settings — configure ports and commands
+          - ⚠️ Control Panel — read-only view; process start/stop requires the native Windows app
+
+          ### Deploying
+          Unzip \`${FILE}\` and serve the contents with any static web server:
+          \`\`\`
+          # Python
+          python -m http.server 8090
+
+          # Node
+          npx serve .
+          \`\`\`
+
+          ### File
+          | File | Description |
+          |------|-------------|
+          | \`${FILE}\` | Flutter web build (static files, unzip and serve) |
+
+          **Built from:** \`${{ github.sha }}\`
+          **Run:** [#${{ github.run_number }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+          EOF
+
+          gh release create "admin-web-v${V}" \
+            "$FILE" \
+            --title "Scout-Ops Admin Menu v${V} (Web)" \
+            --notes-file release_notes.md \
+            --prerelease

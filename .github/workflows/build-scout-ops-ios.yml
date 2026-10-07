@@ -65,10 +65,10 @@ jobs:
       - name: Install provisioning profiles
         if: inputs.codesign == 'true'
         env:
-          PP_ANDROID: ${{ secrets.APPLE_PP_ANDROID_BASE64 }}
+          PP_IOS: ${{ secrets.APPLE_PP_ANDROID_BASE64 }}
         run: |
           mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
-          echo "$PP_ANDROID" | base64 --decode > ~/Library/MobileDevice/Provisioning\ Profiles/scout_ops_mobile.mobileprovision
+          echo "$PP_IOS" | base64 --decode > ~/Library/MobileDevice/Provisioning\ Profiles/scout_ops_mobile.mobileprovision
 
       # flutter pub get on macOS generates the Podfile and runs pod install automatically.
       # flutter build ipa then handles the full CocoaPods + Xcode build chain.
@@ -84,9 +84,7 @@ jobs:
             flutter build ios --release --no-codesign --no-tree-shake-icons
             mkdir -p Payload
             cp -R build/ios/iphoneos/Runner.app Payload/
-            cd Payload
-            zip -r -0 ../scout_ops_mobile_unsigned.ipa Runner.app
-            cd ..
+            zip -r -0 scout_ops_mobile_unsigned.ipa Payload
             rm -rf Payload
           fi
 

@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -58,6 +59,10 @@ class _ControlPanelScreenState extends State<ControlPanelScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _Header(overallLabel: overallLabel, overallColor: overallColor),
+          if (kIsWeb) ...[
+            const SizedBox(height: 16),
+            const _WebModeBanner(),
+          ],
           const SizedBox(height: 30),
           _AppGrid(configs: configs, provider: provider),
           const SizedBox(height: 30),
@@ -139,6 +144,53 @@ class _Header extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+class _WebModeBanner extends StatelessWidget {
+  const _WebModeBanner();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+      decoration: BoxDecoration(
+        color: statusInfo.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: statusInfo.withValues(alpha: 0.2)),
+      ),
+      child: const Row(
+        children: [
+          Text('🌐', style: TextStyle(fontSize: 18)),
+          SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Web Mode — Read Only',
+                  style: TextStyle(
+                    color: statusInfo,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 14,
+                  ),
+                ),
+                SizedBox(height: 2),
+                Text(
+                  'Process control requires the native Windows app. '
+                  'Server Health, sync, and settings work fully in the browser.',
+                  style: TextStyle(
+                    color: textSecondary,
+                    fontSize: 12,
+                    height: 1.5,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -257,6 +309,33 @@ class _AppCard extends StatelessWidget {
     bool isBuild,
     bool isIos,
   ) {
+    // On web, process control is unavailable — show an informational badge.
+    if (kIsWeb) {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        decoration: BoxDecoration(
+          color: statusInfo.withValues(alpha: 0.08),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: statusInfo.withValues(alpha: 0.2)),
+        ),
+        child: const Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.public, size: 13, color: statusInfo),
+            SizedBox(width: 6),
+            Text(
+              'Web Mode',
+              style: TextStyle(
+                color: statusInfo,
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
     if (isBuild) {
       return Row(
         children: [
@@ -579,7 +658,9 @@ class _LogPane extends StatelessWidget {
               padding: const EdgeInsets.all(12),
               child: logs.isEmpty
                   ? Text(
-                      '[System] Listening for logs from ${provider.configs[activeLogId]?.name ?? activeLogId}...',
+                      kIsWeb
+                          ? '[Web Mode] Process logs are only available in the native app.'
+                          : '[System] Listening for logs from ${provider.configs[activeLogId]?.name ?? activeLogId}...',
                       style: const TextStyle(
                         color: consoleBlue,
                         fontFamily: 'monospace',

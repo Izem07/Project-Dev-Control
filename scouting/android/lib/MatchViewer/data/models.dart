@@ -1,4 +1,4 @@
-import 'package:match_record/util/constants.dart';
+import 'package:scout_ops_android/MatchViewer/util/constants.dart';
 
 class Event {
   final String eventKey;
@@ -712,8 +712,7 @@ class ImportSessionEntry {
     int? Function()? fileSizeBytes,
   }) =>
       ImportSessionEntry(
-        recordingId:
-            recordingId != null ? recordingId() : this.recordingId,
+        recordingId: recordingId != null ? recordingId() : this.recordingId,
         originalFilename: originalFilename ?? this.originalFilename,
         wasSelected: wasSelected ?? this.wasSelected,
         wasAutoSkipped: wasAutoSkipped ?? this.wasAutoSkipped,
@@ -896,9 +895,8 @@ class AppSettings {
             AppConstants.defaultScrubExponent,
         scrubMaxRangeMs: json['scrubMaxRangeMs'] as int? ??
             AppConstants.defaultScrubMaxRangeMs,
-        scrubCoalescingIntervalMs:
-            json['scrubCoalescingIntervalMs'] as int? ??
-                AppConstants.defaultScrubCoalescingIntervalMs,
+        scrubCoalescingIntervalMs: json['scrubCoalescingIntervalMs'] as int? ??
+            AppConstants.defaultScrubCoalescingIntervalMs,
         recordedMatchesOnly: json['recordedMatchesOnly'] as bool? ?? false,
         sidesSwapped: json['sidesSwapped'] as bool? ?? false,
         lastTbaFetchTime: json['lastTbaFetchTime'] != null
@@ -934,8 +932,7 @@ class AppSettings {
         scrubMaxRangeMs: scrubMaxRangeMs ?? this.scrubMaxRangeMs,
         scrubCoalescingIntervalMs:
             scrubCoalescingIntervalMs ?? this.scrubCoalescingIntervalMs,
-        recordedMatchesOnly:
-            recordedMatchesOnly ?? this.recordedMatchesOnly,
+        recordedMatchesOnly: recordedMatchesOnly ?? this.recordedMatchesOnly,
         sidesSwapped: sidesSwapped ?? this.sidesSwapped,
         lastTbaFetchTime: lastTbaFetchTime != null
             ? lastTbaFetchTime()
@@ -1059,13 +1056,11 @@ class AppData {
                 .toList() ??
             [],
         importSessions: (json['importSessions'] as List<dynamic>?)
-                ?.map(
-                    (e) => ImportSession.fromJson(e as Map<String, dynamic>))
+                ?.map((e) => ImportSession.fromJson(e as Map<String, dynamic>))
                 .toList() ??
             [],
         skipHistory: (json['skipHistory'] as List<dynamic>?)
-                ?.map(
-                    (e) => VideoSkipEntry.fromJson(e as Map<String, dynamic>))
+                ?.map((e) => VideoSkipEntry.fromJson(e as Map<String, dynamic>))
                 .toList() ??
             [],
         settings: json['settings'] != null
