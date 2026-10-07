@@ -72,19 +72,19 @@ jobs:
           echo "storePassword=${{ secrets.KEYSTORE_PASSWORD }}" > android/key.properties
           echo "keyPassword=${{ secrets.KEY_PASSWORD }}"        >> android/key.properties
           echo "keyAlias=${{ secrets.KEY_ALIAS }}"              >> android/key.properties
-          echo "storeFile=keystore.jks"                         >> android/key.properties
+          echo "storeFile=app/keystore.jks"                     >> android/key.properties
 
       # ── 5. Build: Scout-Ops Mobile App (with built-in modules) ───────────────────────
       - name: Build Scout-Ops Mobile App
         working-directory: scouting/android
         run: |
           flutter pub get
-          flutter build apk --${{ inputs.build_type }} --no-tree-shake-icons
+          flutter build apk --${{ inputs.build_type }} --no-tree-shake-icons --verbose
 
       - name: Build Scout-Ops Mobile App Bundle
         if: inputs.build_type == 'release'
         working-directory: scouting/android
-        run: flutter build appbundle --no-tree-shake-icons
+        run: flutter build appbundle --no-tree-shake-icons --verbose
 
       # ── 6. Collect & rename APK ─────────────────────────────────────────
       - name: Collect artifacts
